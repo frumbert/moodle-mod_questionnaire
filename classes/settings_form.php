@@ -88,6 +88,7 @@ class settings_form extends \moodleform {
 
         $editoroptions = array('maxfiles' => EDITOR_UNLIMITED_FILES, 'trusttext' => true);
         $mform->addElement('editor', 'thank_body', get_string('bodytext', 'questionnaire'), null, $editoroptions);
+        $mform->addHelpButton('thank_body', 'bodytext', 'questionnaire');
         $mform->setType('thank_body', PARAM_RAW);
         $mform->setDefault('thank_body', $questionnaire->survey->thank_body);
 

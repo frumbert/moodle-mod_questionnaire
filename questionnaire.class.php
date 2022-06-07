@@ -2474,10 +2474,20 @@ class questionnaire {
             $thankhead = '';
             $thankbody = '';
         }
+
+        // substitutions: do we need to calculate the score?
+        if ((strpos($thankbody, '{score:') !== false || strpos($thankurl, '{score:') !== false) && ($scoreObj = $this->get_response_score($this->rid))) {
+            $thankbody = str_replace(['{score:raw}','{score:percent}'], [$scoreObj->score, $scoreObj->percent], $thankbody);
+            $thankurl = str_replace(['{score:raw}','{score:percent}'], [$scoreObj->score, $scoreObj->percent], $thankurl);
+        }
+
         if (!empty($thankurl)) {
-            $find = ['{user:idnumber}','{user:username}','{course:id}','{course:idnumber}','{id}'];
-            $replace = [rawurlencode($USER->idnumber), rawurlencode($USER->username), $COURSE->id, rawurlencode($COURSE->idnumber), $this->survey->id];
+            // other substitutions
+            $find = ['{user:idnumber}','{user:username}','{course:id}','{course:idnumber}','{id}','{timestamp}'];
+            $replace = [rawurlencode($USER->idnumber), rawurlencode($USER->username), $COURSE->id, rawurlencode($COURSE->idnumber), $this->survey->id, time()];
             $thankurl = str_replace($find, $replace, $thankurl);
+
+            // perform redirect
             if (!headers_sent()) {
                 header("Location: $thankurl");
                 exit;
@@ -4081,4 +4091,64 @@ class questionnaire {
 
         return $areas;
     }
+
+    /**
+     * Get the total score for a single reponse
+     * @param int $rid response-id
+     * @return stdClass
+     */
+    public function get_response_score($rid) {
+        $responsescores = [];
+        $rids = [$rid]; // only want this one response, but score calculators require an array
+        $qmax = [];
+
+        // Calculate max score per question in questionnaire.
+        $maxtotalscore = 0;
+        foreach ($this->questions as $question) {
+            $qid = $question->id;
+            if ($question->valid_feedback()) {
+                $qmax[$qid] = $question->get_feedback_maxscore();
+                $maxtotalscore += $qmax[$qid];
+                // Get all the feedback scores for this question.
+                $responsescores[$qid] = $question->get_feedback_scores($rids);
+            }
+        }
+
+        // Just in case no values have been entered in the various questions possible answers field.
+        if ($maxtotalscore === 0) {
+            return false;
+        }
+
+        // Get individual scores for each question in this responses set.
+        $qscore = [];
+        $allqscore = [];
+
+        foreach ($responsescores as $qid => $responsescore) {
+            if (!empty($responsescore)) {
+                foreach ($responsescore as $rrid => $response) {
+                    // If this is current user's response
+                    if ($rrid == $rid) {
+                        if (!isset($qscore[$qid])) {
+                            $qscore[$qid] = 0;
+                        }
+                        $qscore[$qid] = $response->score;
+                    }
+                    // Course score.
+                    if (!isset($allqscore[$qid])) {
+                        $allqscore[$qid] = 0;
+                    }
+                    // Only add current score if conditions below are met.
+                    $allqscore[$qid] += $response->score;
+                }
+            }
+        }
+        $result = new \stdClass();
+        $totalscore = array_sum($qscore);
+        $result->score = $totalscore;
+        $result->percent = round($totalscore / $maxtotalscore * 100);
+
+        return $result;
+    }
+
+
 }

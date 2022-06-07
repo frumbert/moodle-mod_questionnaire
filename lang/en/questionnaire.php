@@ -61,6 +61,9 @@ $string['averageposition'] = 'Average position';
 $string['averagerank'] = 'Average rank';
 $string['averagesrow'] = 'Averages (where applicable):';
 $string['bodytext'] = 'Body text';
+$string['bodytext_help'] = "You can use the following substitutions within the body text:\n
+{score:raw} = The response score\n
+{score:percent} = The score as a percent";
 $string['boxesnbexact'] = 'exactly {$a} box(es).';
 $string['boxesnbmax'] = 'a maximum of {$a} box(es).';
 $string['boxesnbmin'] = 'a minimum of {$a} box(es).';
@@ -631,8 +634,9 @@ $string['url_help'] = "The URL to which a user is redirected after completing th
 {course:idnumber} = The course idnumber\n
 {course:id} = The course id\n
 {id} = The survey id\n
-Example:\n
-https://redir.url/?uid={user:idnumber}&cid={course:idnumber}";
+{score:raw} = The response score\n
+{score:percent} = The score as a percent\n
+{timestamp} = timestamp";
 $string['useprivate'] = 'Copy existing';
 $string['usepublic'] = 'Use public';
 $string['usetemplate'] = 'Use template';
