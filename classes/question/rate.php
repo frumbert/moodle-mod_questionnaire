@@ -701,7 +701,7 @@ class rate extends question {
             $defaultvalue .= $value . '=' . $label . "\n";
         }
 
-        $options = ['wrap' => 'virtual'];
+        $options = ['wrap' => 'virtual', 'cols' => 80, 'rows' => 5];
         $mform->addElement('textarea', 'allnameddegrees', get_string('allnameddegrees', 'questionnaire'), $options);
         $mform->setDefault('allnameddegrees', $defaultvalue);
         $mform->setType('allnameddegrees', PARAM_RAW);

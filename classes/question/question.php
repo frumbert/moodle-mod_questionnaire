@@ -1204,7 +1204,7 @@ abstract class question {
             $helpname = $this->helpname();
 
             $mform->addElement('html', '<div class="qoptcontainer">');
-            $options = ['wrap' => 'virtual', 'class' => 'qopts'];
+            $options = ['wrap' => 'virtual', 'class' => 'qopts', 'cols' => 80, 'rows' => 10];
             $mform->addElement('textarea', 'allchoices', get_string('possibleanswers', 'questionnaire'), $options);
             $mform->setType('allchoices', PARAM_RAW);
             $mform->addRule('allchoices', null, 'required', null, 'client');
