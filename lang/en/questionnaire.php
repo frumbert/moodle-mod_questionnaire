@@ -625,7 +625,14 @@ $string['undefinedquestiontype'] = 'Undefined question type!';
 $string['unknown'] = 'Unknown';
 $string['unknownaction'] = 'Unknown questionnaire action specified...';
 $string['url'] = 'Confirmation URL';
-$string['url_help'] = 'The URL to which a user is redirected after completing this questionnaire.';
+$string['url_help'] = "The URL to which a user is redirected after completing this questionnaire. You can use the following substitutions within the URL:\n
+{user:idnumber} = The user's idnumber\n
+{user:username} = The user's username\n
+{course:idnumber} = The course idnumber\n
+{course:id} = The course id\n
+{id} = The survey id\n
+Example:\n
+https://redir.url/?uid={user:idnumber}&cid={course:idnumber}";
 $string['useprivate'] = 'Copy existing';
 $string['usepublic'] = 'Use public';
 $string['usetemplate'] = 'Use template';
