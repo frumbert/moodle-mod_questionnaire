@@ -393,3 +393,14 @@ td.selected {
 #page-mod-questionnaire-questions #fitem_id_allnameddegrees #id_allnameddegrees {
     resize: both;
 }
+
+.questionnaire-rate-table {
+    width: auto;
+    margin: 0 auto;
+}
+.questionnaire-rate-col1 {
+    width: auto;
+}
+.questionnaire-rate-col {
+    width: 5%;
+}

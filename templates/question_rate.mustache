@@ -122,14 +122,14 @@
     }}
 <!-- Begin HTML generated from question_rate template. -->
 {{#qelements}}
-<table style="width:{{twidth}}">
+<table class="questionnaire-rate-table" width="{{twidth}}">
   <tbody>
     {{#qelements.headerrow}}
     <tr>
-      <td style="width:{{col1width}}"></td>
+      <td class="questionnaire-rate-col1" width="{{col1width}}"></td>
       {{#colnya}}<td title="nya"></td>{{/colnya}}
       {{#cols}}
-      <td style="width:{{colwidth}}; text-align:center;" class="smalltext">{{{coltext}}}</td>
+      <td  class="questionnaire-rate-col smalltext" width="{{colwidth}}">{{{coltext}}}</td>
       {{/cols}}
     {{/qelements.headerrow}}
     {{#qelements.rows}}
