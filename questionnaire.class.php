@@ -2461,7 +2461,7 @@ class questionnaire {
      * Redirect to the appropriate finish page.
      */
     private function response_goto_thankyou() {
-        global $CFG, $USER, $DB, $COURSE;
+        global $CFG, $USER, $DB;
 
         $select = 'id = '.$this->survey->id;
         $fields = 'thanks_page, thank_head, thank_body';
@@ -2484,7 +2484,7 @@ class questionnaire {
         if (!empty($thankurl)) {
             // other substitutions
             $find = ['{user:idnumber}','{user:username}','{course:id}','{course:idnumber}','{id}','{timestamp}'];
-            $replace = [rawurlencode($USER->idnumber), rawurlencode($USER->username), $COURSE->id, rawurlencode($COURSE->idnumber), $this->survey->id, time()];
+            $replace = [rawurlencode($USER->idnumber), rawurlencode($USER->username), $this->course->id, rawurlencode($this->course->idnumber), $this->survey->id, time()];
             $thankurl = str_replace($find, $replace, $thankurl);
 
             // perform redirect
