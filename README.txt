@@ -1,3 +1,9 @@
+CURRENT DEVELOPMENT IS ON THE 311 BRANCH
+
+https://github.com/frumbert/moodle-mod_questionnaire/tree/MOODLE_311_STABLE
+
+--------------------------------------------------------------------------------
+
 The questionnaire module allows you to construct questionnaires (surveys) from a
 variety of question type. It was originally based on phpESP, and Open Source
 survey tool.
