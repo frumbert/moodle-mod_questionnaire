@@ -301,6 +301,7 @@ class renderer extends \plugin_renderer_base {
                         $resptags->qformelement = $this->render_from_template($template, $resptags->qformelement);
                     }
                     $resptags->respdate = userdate($response->submitted);
+                    $resptags->fieldset->class .= ' qn-' . $question->helpname();
                     $pagetags->responses[] = $resptags;
                 }
                 $qnum++;
