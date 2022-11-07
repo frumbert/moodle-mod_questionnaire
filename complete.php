@@ -40,8 +40,6 @@ $resume = optional_param('resume', null, PARAM_INT);    // Is this attempt a res
 
 list($cm, $course, $questionnaire) = questionnaire_get_standard_page_items($id, $a);
 
-// Check login and get context.
-require_course_login($course, true, $cm);
 $context = context_module::instance($cm->id);
 require_capability('mod/questionnaire:view', $context);
 
@@ -54,6 +52,11 @@ if (isset($id)) {
 
 $PAGE->set_url($url);
 $PAGE->set_context($context);
+
+// Check login and get context.
+require_course_login($course, true, $cm);
+
+
 $questionnaire = new questionnaire( $course, $cm, 0, $questionnaire);
 // Add renderer and page objects to the questionnaire object for display use.
 $questionnaire->add_renderer($PAGE->get_renderer('mod_questionnaire'));

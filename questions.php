@@ -46,9 +46,6 @@ if (! $questionnaire = $DB->get_record("questionnaire", array("id" => $cm->insta
     throw new \moodle_exception('invalidcoursemodule', 'mod_questionnaire');
 }
 
-require_course_login($course, true, $cm);
-$context = context_module::instance($cm->id);
-
 $url = new moodle_url($CFG->wwwroot.'/mod/questionnaire/questions.php');
 $url->param('id', $id);
 if ($qid) {
@@ -56,6 +53,9 @@ if ($qid) {
 }
 
 $PAGE->set_url($url);
+require_course_login($course, true, $cm);
+$context = context_module::instance($cm->id);
+
 $PAGE->set_context($context);
 
 $questionnaire = new questionnaire($course, $cm, 0, $questionnaire);

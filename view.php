@@ -40,9 +40,10 @@ $sid = optional_param('sid', null, PARAM_INT);  // Survey id.
 
 list($cm, $course, $questionnaire) = questionnaire_get_standard_page_items($id, $a);
 
-// Check login and get context.
-require_course_login($course, true, $cm);
 $context = context_module::instance($cm->id);
+
+// tim;
+require_capability('mod/questionnaire:view', $context);
 
 $url = new moodle_url($CFG->wwwroot.'/mod/questionnaire/view.php');
 if (isset($id)) {
@@ -56,6 +57,11 @@ if (isset($sid)) {
 
 $PAGE->set_url($url);
 $PAGE->set_context($context);
+
+// Check login and get context.
+// tim: AFTER $PAGE->set_url() occurs!
+require_course_login($course, true, $cm);
+
 $questionnaire = new questionnaire($course, $cm, 0, $questionnaire);
 // Add renderer and page objects to the questionnaire object for display use.
 $questionnaire->add_renderer($PAGE->get_renderer('mod_questionnaire'));

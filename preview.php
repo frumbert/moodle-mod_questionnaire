@@ -66,14 +66,6 @@ if ($id) {
     }
 }
 
-// Check login and get context.
-// Do not require login if this questionnaire is viewed from the Add questionnaire page
-// to enable teachers to view template or public questionnaires located in a course where they are not enroled.
-if (!$popup) {
-    require_login($course->id, false, $cm);
-}
-$context = $cm ? context_module::instance($cm->id) : false;
-
 $url = new moodle_url('/mod/questionnaire/preview.php');
 if ($id !== 0) {
     $url->param('id', $id);
@@ -82,6 +74,14 @@ if ($sid) {
     $url->param('sid', $sid);
 }
 $PAGE->set_url($url);
+
+// Check login and get context.
+// Do not require login if this questionnaire is viewed from the Add questionnaire page
+// to enable teachers to view template or public questionnaires located in a course where they are not enroled.
+if (!$popup) {
+    require_login($course->id, false, $cm);
+}
+$context = $cm ? context_module::instance($cm->id) : false;
 
 $PAGE->set_context($context);
 $PAGE->set_cm($cm);   // CONTRIB-5872 - I don't know why this is needed.

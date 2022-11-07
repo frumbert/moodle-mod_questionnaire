@@ -47,12 +47,14 @@ if (! $questionnaire = $DB->get_record("questionnaire", ["id" => $cm->instance])
     throw new \moodle_exception('invalidcoursemodule', 'mod_questionnaire');
 }
 
+// page set_url has to be called ahead of require_logon
+$url = new moodle_url('/mod/questionnaire/fbsections.php', ['id' => $id]);
+$PAGE->set_url($url);
+
 // Needed here for forced language courses.
 require_course_login($course, true, $cm);
 $context = context_module::instance($cm->id);
 
-$url = new moodle_url('/mod/questionnaire/fbsections.php', ['id' => $id]);
-$PAGE->set_url($url);
 $PAGE->set_context($context);
 if (!isset($SESSION->questionnaire)) {
     $SESSION->questionnaire = new stdClass();

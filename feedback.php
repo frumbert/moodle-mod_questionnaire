@@ -44,11 +44,12 @@ if (! $questionnaire = $DB->get_record("questionnaire", ["id" => $cm->instance])
     throw new \moodle_exception('invalidcoursemodule', 'mod_questionnaire');
 }
 
+$PAGE->set_url(new moodle_url($CFG->wwwroot.'/mod/questionnaire/feedback.php', ['id' => $id]));
+
 // Needed here for forced language courses.
 require_course_login($course, true, $cm);
 $context = context_module::instance($cm->id);
 
-$PAGE->set_url(new moodle_url($CFG->wwwroot.'/mod/questionnaire/feedback.php', ['id' => $id]));
 $PAGE->set_context($context);
 if (!isset($SESSION->questionnaire)) {
     $SESSION->questionnaire = new stdClass();
