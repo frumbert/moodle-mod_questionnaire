@@ -81,6 +81,24 @@ class rate extends question {
         return 'mod_questionnaire/response_rate';
     }
 
+    // public function allows_dependents() {
+    //     return $this->normal_rate_scale(); // normal = true; other = false
+    // }
+
+    // this won't work because you can't store named degrees - needs better db structure
+    // protected function get_dependency_options() {
+    //     $options = [];
+    //     if ($this->name != '') {
+    //         foreach ($this->choices as $ch_index => $ch_obj) {
+    //             foreach ($this->nameddegrees as $nd_label => $nd_value) {
+    //                 $key = $this->id . ',' . $ch_index . '.' . $nd_label;
+    //                 $options[$key] = $this->name . '->' . $ch_obj->content . '->' . $nd_value;
+    //             }
+    //         }
+    //     }
+    //     return $options;
+    // }
+
     /**
      * Return true if rate scale type is set to "Normal".
      * @param int $scaletype
