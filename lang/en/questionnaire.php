@@ -267,6 +267,10 @@ $string['invalidresponserecord'] = 'Invalid response record specified.';
 $string['invalidsurveyid'] = 'Invalid questionnaire ID.';
 $string['invalidsectionid'] = 'Invalid feedback section specified.';
 $string['indirectwarnings'] = 'This list shows the indirect dependent questions and the remaining dependencies for direct dependent questions:';
+
+$string['javascript'] = 'Javascript';
+$string['javascript_help'] = 'Javascript to execute on display of question';
+
 $string['kindofratescale'] = 'Type of rate scale';
 $string['kindofratescale_help'] = 'Right-click on the More Help link below.';
 $string['kindofratescale_link'] = 'mod/questionnaire/questions#Type_of_rate_scale';

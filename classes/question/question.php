@@ -105,6 +105,9 @@ abstract class question {
     /** @var mixed $extradata Any custom data for the question type. */
     public $extradata = '';
 
+    /** @var mixed $javascript Javascript to execute at question render. */
+    public $javascript = '';
+
     /** @var array $qtypenames List of all question names. */
     private static $qtypenames = [
         QUESYESNO => 'yesno',
@@ -156,6 +159,7 @@ abstract class question {
             $this->required = $question->required;
             $this->deleted = $question->deleted;
             $this->extradata = $question->extradata;
+            $this->javascript = $question->javascript;
 
             $this->type_id = $question->type_id;
             $this->type = $qtypes[$this->type_id]->type;
@@ -599,6 +603,7 @@ abstract class question {
             $questionrecord->extradata = $this->extradata;
             $questionrecord->dependquestion = $this->dependquestion;
             $questionrecord->dependchoice = $this->dependchoice;
+            $questionrecord->javascript = $this->javascript;
         } else {
             // Make sure the "id" field is this question's.
             if (isset($this->qid) && ($this->qid > 0)) {
@@ -911,7 +916,8 @@ abstract class question {
         // In preview mode, hide children questions that have not been answered.
         // In report mode, If questionnaire is set to no numbering,
         // also hide answers to questions that have not been answered.
-        $displayclass = 'qn-container';
+        $questionName = preg_replace('[^a-z0-9_]', '', strtolower($this->name));
+        $displayclass = "qn-container qn-type-{$this->type_id} qn-name-{$questionName}";
         if ($pagetype == 'mod-questionnaire-preview' || ($nonumbering &&
             ($currenttab == 'mybyresponse' || $currenttab == 'individualresp'))) {
             // This needs to be done to ensure all dependency data is loaded.
@@ -922,6 +928,8 @@ abstract class question {
         }
 
         $pagetags->fieldset = (object)['id' => $this->id, 'class' => $displayclass];
+
+        $pagetags->javascript = questionnaire_question_javascript($this);
 
         // Do not display the info box for the label question type.
         if ($this->type_id != QUESSECTIONTEXT) {
@@ -978,6 +986,7 @@ abstract class question {
         $this->form_length($mform);
         $this->form_precise($mform);
         $this->form_question_text($mform, ($form->_customdata['modcontext'] ?? ''));
+        $this->form_javascript($mform);
 
         if ($this->has_choices()) {
             // This is used only by the question editing form.
@@ -1080,6 +1089,20 @@ abstract class question {
      */
     protected function form_precise(\MoodleQuickForm $mform, $helpname = '') {
         self::form_precise_text($mform, $helpname);
+    }
+
+    /**
+     * Return the javascript form element
+     * @param \MoodleQuickForm $mform
+     * @param string $helpname
+     */
+    protected function form_javascript(\MoodleQuickForm $mform, $helpname = '') {
+        $mform->addElement('textarea', 'javascript', get_string('javascript', 'questionnaire'), 
+            ['rows' => 8, 'cols' => 80, 'class' => 'smalltext']);
+        $mform->setType('javascript', PARAM_RAW);
+        $mform->addHelpButton('javascript', 'javascript', 'questionnaire');
+        return $mform;
+
     }
 
     /**
@@ -1306,7 +1329,7 @@ abstract class question {
             $formdata->content = file_save_draft_area_files($formdata->itemid, $questionnaire->context->id, 'mod_questionnaire',
                 'question', $formdata->qid, ['subdirs' => true], $formdata->content);
 
-            $fields = ['name', 'type_id', 'length', 'precise', 'required', 'content', 'extradata'];
+            $fields = ['name', 'type_id', 'length', 'precise', 'required', 'content', 'extradata', 'javascript'];
             $questionrecord = new \stdClass();
             $questionrecord->id = $formdata->qid;
             foreach ($fields as $f) {
@@ -1324,7 +1347,7 @@ abstract class question {
             // Create new question:
             // Need to update any image content after the question is created, so create then update the content.
             $formdata->surveyid = $formdata->sid;
-            $fields = ['surveyid', 'name', 'type_id', 'length', 'precise', 'required', 'position', 'extradata'];
+            $fields = ['surveyid', 'name', 'type_id', 'length', 'precise', 'required', 'position', 'extradata', 'javascript'];
             $questionrecord = new \stdClass();
             foreach ($fields as $f) {
                 if (isset($formdata->$f)) {

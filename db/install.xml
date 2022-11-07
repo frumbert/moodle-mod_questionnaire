@@ -78,6 +78,7 @@
         <FIELD NAME="required" TYPE="char" LENGTH="1" NOTNULL="true" DEFAULT="n" SEQUENCE="false"/>
         <FIELD NAME="deleted" TYPE="char" LENGTH="1" NOTNULL="true" DEFAULT="n" SEQUENCE="false"/>
         <FIELD NAME="extradata" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="If a question needs more than the standard fields provided, use this field."/>
+        <FIELD NAME="javascript" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Script to execute during question display."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

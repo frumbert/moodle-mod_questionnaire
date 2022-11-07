@@ -1276,3 +1276,13 @@ function mod_questionnaire_coursemodule_edit_post_actions($data, $course) {
 
     return $data;
 }
+
+/**
+ * A question can execute raw javascript through the template renderer so you can't inject contextual values directly as it is just a string
+ * so we have to manually find and replace known useful template values into the javascript string
+ */
+function questionnaire_question_javascript($question) {
+    $js = !empty($question->javascript) ? $question->javascript : '';
+    $js = str_replace(['{{id}}','{{name}}'],[$question->id,$question->name],$js);
+    return $js;
+}
