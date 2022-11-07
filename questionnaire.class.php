@@ -435,6 +435,39 @@ class questionnaire {
     }
 
     /**
+     * Function to view just the feedback to a respone.
+     * @param int $rid
+     * @param string $referer
+     * @param string $resps
+     * @param bool $compare
+     * @param bool $isgroupmember
+     * @param bool $allresponses
+     * @param int $currentgroupid
+     * @param bool $viewnotes
+     */
+    public function view_feedback($rid, $referer= '', $resps = '', $compare = false, $isgroupmember = false, $allresponses = false,
+                                  $currentgroupid = 0, $viewnotes = true) {
+
+        $this->add_response($rid);
+        if ($referer != 'print') {
+            $feedbackmessages = $this->response_analysis($rid, $resps, $compare, $isgroupmember, $allresponses, $currentgroupid);
+            if ($feedbackmessages) {
+                $msgout = '';
+                foreach ($feedbackmessages as $msg) {
+                    $msgout .= $msg;
+                }
+                $this->page->add_to_page('feedbackmessages', $msgout);
+            }
+
+            if ($viewnotes && $this->survey->feedbacknotes) {
+                $text = file_rewrite_pluginfile_urls($this->survey->feedbacknotes, 'pluginfile.php',
+                    $this->context->id, 'mod_questionnaire', 'feedbacknotes', $this->survey->id);
+                $this->page->add_to_page('feedbacknotes', $this->renderer->box(format_text($text, FORMAT_HTML)));
+            }
+        }
+    }
+
+    /**
      * Function to view all loaded responses.
      */
     public function view_all_responses() {
@@ -4149,6 +4182,5 @@ class questionnaire {
 
         return $result;
     }
-
 
 }
