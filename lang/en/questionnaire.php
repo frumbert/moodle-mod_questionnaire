@@ -269,7 +269,13 @@ $string['invalidsectionid'] = 'Invalid feedback section specified.';
 $string['indirectwarnings'] = 'This list shows the indirect dependent questions and the remaining dependencies for direct dependent questions:';
 
 $string['javascript'] = 'Javascript';
-$string['javascript_help'] = 'Javascript to execute on display of question';
+$string['javascript_help'] = "Javascript to execute on display of question. You can use the following inline replacements:\n\n
+{{id}} - Question Id\n
+{{name}} - Question Name\n
+{{courseid}} - Course Id\n
+{{userid}} - User Id\n
+{{cmid}} - module instance id\n
+{{sesskey}} - Session Key\n";
 
 $string['kindofratescale'] = 'Type of rate scale';
 $string['kindofratescale_help'] = 'Right-click on the More Help link below.';

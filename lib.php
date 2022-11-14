@@ -1282,7 +1282,11 @@ function mod_questionnaire_coursemodule_edit_post_actions($data, $course) {
  * so we have to manually find and replace known useful template values into the javascript string
  */
 function questionnaire_question_javascript($question) {
+global $COURSE, $USER;
     $js = !empty($question->javascript) ? $question->javascript : '';
-    $js = str_replace(['{{id}}','{{name}}'],[$question->id,$question->name],$js);
+    $sesskey = sesskey();
+    $find = ['{{id}}', '{{name}}', '{{courseid}}', '{{userid}}', '{{cmid}}', '{{sesskey}}'];
+    $replace = [$question->id, $question->name, $COURSE->id, $USER->id, $question->context->instanceid, $sesskey];
+    $js = str_replace($find, $replace, $js);
     return $js;
 }
