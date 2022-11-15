@@ -40,7 +40,7 @@ $currenttab = $SESSION->questionnaire->current_tab;
 
 $owner = $questionnaire->is_survey_owner();
 if ($questionnaire->capabilities->manage  && $owner) {
-    $row[] = new tabobject('settings', $CFG->wwwroot.htmlspecialchars('/course/modedit.php?'.
+    $row[] = new tabobject('edit', $CFG->wwwroot.htmlspecialchars('/course/modedit.php?'.
             'update='.$questionnaire->cm->id), get_string('edit'));
 
 
