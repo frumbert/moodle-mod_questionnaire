@@ -1,6 +1,6 @@
 # Fork
 
-The purpose of this fork is to introduce javascript support to question to allow for custom rendering of controls.
+The purpose of this fork is to introduce javascript support to question to allow for custom rendering of controls to implement features that don't exist within the main branch - like randomising the answer order, or pre-populating fields based on external data.
 
 For example, this code adds a range slider to the text control (using noUiSlider):
 ```js
@@ -16,7 +16,7 @@ require(['https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.6.1/nouislider.mi
     node.id = "qn-{{id}}-slider";
     wrapper.appendChild(node);
 
-    const classes = ['avant-pale-blue-bg', 'avant-lime-bg', 'avant-yellow-bg']; // one more than the length of values
+    const classes = ['pale-blue-bg', 'lime-bg', 'yellow-bg']; // one more than the length of values
 
     let input = (field.value.length ? field.value : '30%,40%,30%').split(',').map(function(v) { return parseInt(v); });
     let values = [input[0],input[1]]; // last value is implied
@@ -45,10 +45,37 @@ require(['https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.6.1/nouislider.mi
 });
 ```
 
-Javascript has the following two fields that can be included in the script, replaced at runtime:
+This code randomises the order of the answers (except the last one, which is where you might have an 'Other answer' type response, and this should be at the bottom).
+
+```js
+function fy(a,b,c,d){c=a.length;while(c)b=Math.random()*c--|0,d=a[c],a[c]=a[b],a[b]=d}
+for (node of document.querySelector("#qn-{{id}} .qn-answer").childNodes) if (node.nodeType === Node.COMMENT_NODE) node.parentNode.removeChild(node);
+
+let ar = [], tmp = [];
+let pool = document.querySelector('#qn-{{id}} .qn-answer');
+for (child of pool.children) {
+    if (child === pool.lastElementChild || child.nodeName === 'BR') {
+        ar.push(tmp.join(''));tmp = [];
+    } else {
+        tmp.push(child.outerHTML);
+    }
+}
+
+let last = ar.pop();
+fy(ar);
+ar.push(last);
+
+pool.innerHTML = ar.join('<br />');
+```
+
+Javascript has the following fields that can be included in the script, replaced at runtime:
 
 `{{id}}` - The question id (integer)
 `{{name}}` - The question name (string)
+`{{courseid}}` - The course id (integer)
+`{{userid}}` - The user id (integer)
+`{{cmid}}` - The module instance number (integer)
+`{{sesskey}}` - The session key, useful for ajax scripts
 
 > To support more variables, modify `questionnaire_question_javascript()` in `lib.php`
 
