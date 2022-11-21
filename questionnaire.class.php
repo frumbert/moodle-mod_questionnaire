@@ -272,12 +272,13 @@ class questionnaire {
         $PAGE->requires->js_init_call('M.mod_questionnaire.init_attempt_form', null, false, questionnaire_get_js_module());
 
         $message = $this->user_access_messages($USER->id, true);
+
         if ($message !== false) {
             $this->page->add_to_page('notifications', $message);
+
         } else {
             // Handle the main questionnaire completion page.
             $quser = $USER->id;
-
             $msg = $this->print_survey($quser, $USER->id);
 
             // If Questionnaire was submitted with all required fields completed ($msg is empty),
@@ -317,7 +318,11 @@ class questionnaire {
                 $event->trigger();
 
                 $this->submission_notify($this->rid);
-                $this->response_goto_thankyou();
+                if ($this->skipsubmissionpage === "1") {
+                    $this->response_goto_endpage();
+                } else {
+                    $this->response_goto_thankyou();
+                }
             }
         }
     }
@@ -1918,6 +1923,9 @@ class questionnaire {
                 }
             }
         }
+        // TODO
+        // nice to have a way to check questions have been answered in a valid way, rather than
+        // rendering the error for each question inline - or render all erorr messages in the same block
         return ($message);
     }
 
@@ -2488,6 +2496,18 @@ class questionnaire {
         $values += \mod_questionnaire\responsetype\date::response_select($rid);
 
         return($values);
+    }
+
+    private function response_goto_endpage() {
+        global $USER;
+        if ($this->capabilities->readownresponses) {
+            $url = new moodle_url('myreport.php', ['id' => $this->cm->id, 'instance' => $this->cm->instance, 'user' => $USER->id,
+                'byresponse' => 0, 'action' => 'vresp']);
+        } else {
+            $url = new moodle_url('/course/view.php', ['id' => $this->course->id]);
+        }
+        header('location: ' . $url->out(false));
+        
     }
 
     /**
