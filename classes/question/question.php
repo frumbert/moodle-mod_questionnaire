@@ -1100,6 +1100,7 @@ abstract class question {
         $mform->addElement('textarea', 'javascript', get_string('javascript', 'questionnaire'), 
             ['rows' => 8, 'cols' => 80, 'class' => 'smalltext']);
         $mform->setType('javascript', PARAM_RAW);
+        $mform->setAdvanced('javascript');
         $mform->addHelpButton('javascript', 'javascript', 'questionnaire');
         return $mform;
 
