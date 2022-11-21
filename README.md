@@ -1,6 +1,25 @@
 # Fork
 
-The purpose of this fork is to introduce javascript support to question to allow for custom rendering of controls to implement features that don't exist within the main branch - like randomising the answer order, or pre-populating fields based on external data.
+The purpose of this fork is to INTRODUCE new features.
+
+## HTML rendering fixes
+
+* The RATE question type has invalid table markup (unclosed tags). Fixed.
+* The RATE question now uses a `<thead>` section for the column labels
+* The RADIO (vertical) option now groups label+input inside `<div role='grouping'>` blocks instead of using `<BR />` to separate lines
+* Any other html control that groups a label+input (e.g. yes/no) is now wrapped in a `<span role='grouping'>`
+
+## Flow Control
+
+* You can bypass the submission screen altogether. Ending a survey will then either redirect to the Feedback page (if set) OR to the course home.
+
+## Question Types
+
+* a TABLE question, similar to a RATE except with checkboxes.
+
+## Per-Question Javascript
+
+Javascript can be set per-question to allow for custom rendering of controls to implement features that don't exist within the normal question rendering - like randomising the answer order, or pre-populating fields based on external data (ie. ajax lookups).
 
 For example, this code adds a range slider to the text control (using noUiSlider):
 ```js
