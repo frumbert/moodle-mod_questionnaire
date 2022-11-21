@@ -123,15 +123,18 @@
 <!-- Begin HTML generated from question_rate template. -->
 {{#qelements}}
 <table class="questionnaire-rate-table" width="{{twidth}}">
-  <tbody>
     {{#qelements.headerrow}}
+    <thead>
     <tr>
       <td class="questionnaire-rate-col1" width="{{col1width}}"></td>
       {{#colnya}}<td title="nya"></td>{{/colnya}}
       {{#cols}}
       <td  class="questionnaire-rate-col smalltext" width="{{colwidth}}">{{{coltext}}}</td>
       {{/cols}}
+    </tr>
+    </thead>
     {{/qelements.headerrow}}
+  <tbody>
     {{#qelements.rows}}
     <tr class="raterow">
       {{#cols}}
