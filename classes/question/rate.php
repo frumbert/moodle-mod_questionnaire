@@ -332,7 +332,8 @@ class rate extends question {
 
         $notcomplete = false;
         if ( ($num != $nbchoices) && ($num != 0) ) {
-            $this->add_notification(get_string('checkallradiobuttons', 'questionnaire', $nbchoices));
+            // somehow this feeback should be at the same location as the page feedback
+           // $this->add_notification(get_string('checkallradiobuttons', 'questionnaire', $nbchoices));
             $notcomplete = true;
         }
 
