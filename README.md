@@ -67,38 +67,27 @@ require(['https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.6.1/nouislider.mi
 This code randomises the order of the answers (except the last one, which is where you might have an 'Other answer' type response, and this should be at the bottom).
 
 ```js
-function fy(a,b,c,d){c=a.length;while(c)b=Math.random()*c--|0,d=a[c],a[c]=a[b],a[b]=d}
-for (node of document.querySelector("#qn-{{id}} .qn-answer").childNodes) if (node.nodeType === Node.COMMENT_NODE) node.parentNode.removeChild(node);
+const shuffleButt = document.querySelector("#qn-{{id}} .qn-answer");
 
-let ar = [], tmp = [];
-let pool = document.querySelector('#qn-{{id}} .qn-answer');
-for (child of pool.children) {
-    if (child === pool.lastElementChild || child.nodeName === 'BR') {
-        ar.push(tmp.join(''));tmp = [];
-    } else {
-        tmp.push(child.outerHTML);
-    }
+for (node of shuffleButt.childNodes) if (node.nodeType === Node.COMMENT_NODE) node.parentNode.removeChild(node);
+
+for (var i = shuffleButt.children.length - 1; i >= 0; i--) {
+    shuffleButt.appendChild(shuffleButt.children[Math.random() * i | 0]);
 }
-
-let last = ar.pop();
-fy(ar);
-ar.push(last);
-
-pool.innerHTML = ar.join('<br />');
 ```
 
 Javascript has the following fields that can be included in the script, replaced at runtime:
 
-`{{id}}` - The question id (integer)
-`{{name}}` - The question name (string)
-`{{courseid}}` - The course id (integer)
-`{{userid}}` - The user id (integer)
-`{{cmid}}` - The module instance number (integer)
-`{{sesskey}}` - The session key, useful for ajax scripts
+* `{{id}}` - The question id (integer)
+* `{{name}}` - The question name (string)
+* `{{courseid}}` - The course id (integer)
+* `{{userid}}` - The user id (integer)
+* `{{cmid}}` - The module instance number (integer)
+* `{{sesskey}}` - The session key, useful for ajax scripts
 
 > To support more variables, modify `questionnaire_question_javascript()` in `lib.php`
 
-# Original
+# Original README
 
 The questionnaire module allows you to construct questionnaires (surveys) from a
 variety of question type. It was originally based on phpESP, and Open Source
