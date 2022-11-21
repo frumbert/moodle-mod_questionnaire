@@ -12,6 +12,7 @@ The purpose of this fork is to INTRODUCE new features.
 ## Flow Control
 
 * You can bypass the submission screen altogether. Ending a survey will then either redirect to the Feedback page (if set) OR to the course home.
+* When your users get stuck on that submission error screen because they refreshed at the wrong time, offer them a way out (button).
 
 ## Question Types
 
