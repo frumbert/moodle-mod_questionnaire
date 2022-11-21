@@ -675,3 +675,6 @@ $string['yesno_help'] = 'Simple Yes/No question.';
 $string['yourresponse'] = 'Your response';
 $string['yourresponses'] = 'Your responses';
 $string['crontask'] = 'Questionnaire cleanup job';
+
+$string['skipsubmissionpage'] = 'Skip submission page';
+$string['skipsubmissionpage_help'] = 'Automatically commit then bypass the submission summary. Automatically load the feedback (if set) or course home';

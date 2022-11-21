@@ -999,6 +999,22 @@ function xmldb_questionnaire_upgrade($oldversion=0) {
         upgrade_mod_savepoint(true, 2021062301, 'questionnaire');
     }
 
+    if ($oldversion < 2021062302) {
+
+        $table = new xmldb_table('questionnaire');
+        $field = new xmldb_field('skipsubmissionpage', XMLDB_TYPE_TEXT, null, null, null, null, 0, 'progressbar');
+
+        // Conditionally launch add field id.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Questionnaire savepoint reached.
+        upgrade_mod_savepoint(true, 2021062302, 'questionnaire');
+    }
+
+    
+
 
     return $result;
 }

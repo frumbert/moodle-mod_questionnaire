@@ -94,6 +94,11 @@ class mod_questionnaire_mod_form extends moodleform_mod {
         }
         $mform->addElement('select', 'grade', get_string('grade', 'questionnaire'), $grades);
 
+        $options = array('0' => get_string('no'), '1' => get_string('yes'));
+        $mform->addElement('select', 'skipsubmissionpage', get_string('skipsubmissionpage', 'questionnaire'), $options);
+        $mform->addHelpButton('skipsubmissionpage', 'skipsubmissionpage', 'questionnaire');
+        $mform->setDefault('skipsubmissionpage', 0);
+
         if (empty($questionnaire->sid)) {
             if (!isset($questionnaire->id)) {
                 $questionnaire->id = 0;
