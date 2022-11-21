@@ -276,6 +276,16 @@ class questionnaire {
         if ($message !== false) {
             $this->page->add_to_page('notifications', $message);
 
+            // OK, so we've had to stop here. At least have an action for the user to do next.
+            if ($this->capabilities->readownresponses) {
+                $url = new moodle_url('myreport.php', ['id' => $this->cm->id, 'instance' => $this->cm->instance, 'user' => $USER->id,
+                    'byresponse' => 0, 'action' => 'vresp']);
+                $this->page->add_to_page('continue', $this->renderer->single_button($url, get_string('continue')));
+            } else {
+                $url = new moodle_url('/course/view.php', ['id' => $this->course->id]);
+                $this->page->add_to_page('continue', $this->renderer->single_button($url, get_string('continue')));
+            }
+
         } else {
             // Handle the main questionnaire completion page.
             $quser = $USER->id;
