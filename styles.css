@@ -290,7 +290,7 @@ td.selected {
     overflow: auto;
 }
 
-.qn-answer input[type=radio] {
+.qn-answer input[type=radio], .qn-answer input[type=checkbox] {
     margin-left: 0.5em;
 }
 
