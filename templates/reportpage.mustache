@@ -67,7 +67,7 @@
     {{#tabsarea}}{{{tabsarea}}}{{/tabsarea}}
     {{#notifications}}{{{notifications}}}{{/notifications}}
     <div class="box generalbox">
-        {{#myheaders}}<h2>{{{.}}}</h2>{{/myheaders}}
+        {{#myheaders}}<h2 class="myheadersTitle">{{{.}}}</h2>{{/myheaders}}
         {{#navigationbar}}<div class="box respondentsnavbar">{{{.}}}</div>{{/navigationbar}}
         {{{respondentinfo}}}
         {{#title}}<h3 class="surveyTitle">{{{.}}}</h3>{{{printblank}}}{{/title}}
@@ -76,7 +76,7 @@
         {{#feedbackcharts}}{{{.}}}{{/feedbackcharts}}
         {{#feedbackscores}}{{{.}}}{{/feedbackscores}}
         {{#feedbackmessages}}
-        <h3>{{# str }} feedbackreport, mod_questionnaire {{/ str }}</h3>
+        <h3 class="feedbackreportTitle">{{# str }} feedbackreport, mod_questionnaire {{/ str }}</h3>
         {{{.}}}
         {{/feedbackmessages}}
         {{#feedbacknotes}}{{{.}}}{{/feedbacknotes}}
