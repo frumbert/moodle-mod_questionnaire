@@ -14,9 +14,11 @@ The purpose of this fork is to INTRODUCE new features.
 * You can bypass the submission screen altogether. Ending a survey will then either redirect to the Feedback page (if set) OR to the course home.
 * When your users get stuck on that submission error screen because they refreshed at the wrong time, offer them a way out (button).
 
-## Question Types
+## Question Type changes
 
-* a TABLE question, similar to a RATE except with checkboxes.
+* a RATE question has a new sub-type of `Table (checkboxes)`.
+
+> Rate ranking is a work-in-progress, for now skipped
 
 ## Per-Question Javascript
 
