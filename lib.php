@@ -1280,13 +1280,26 @@ function mod_questionnaire_coursemodule_edit_post_actions($data, $course) {
 /**
  * A question can execute raw javascript through the template renderer so you can't inject contextual values directly as it is just a string
  * so we have to manually find and replace known useful template values into the javascript string
+ *
+ * @param \mod_questionnaire\question\question $question
+ * @param \mod_questionnaire\responsetype\response\response $response
+ * @return string javascript
  */
-function questionnaire_question_javascript($question) {
+function questionnaire_question_javascript($question, $response = null) {
 global $COURSE, $USER;
     $js = !empty($question->javascript) ? $question->javascript : '';
     $sesskey = sesskey();
-    $find = ['{{id}}', '{{name}}', '{{courseid}}', '{{userid}}', '{{cmid}}', '{{sesskey}}'];
-    $replace = [$question->id, $question->name, $COURSE->id, $USER->id, $question->context->instanceid, $sesskey];
+
+    // response won't exist on the first question; it hasn't saved until you navigate
+    if ($response instanceof \mod_questionnaire\responsetype\response\response) {
+        $responseid = $response->id;
+    } else {
+         $responseid = !empty($response) ?  $response->id : 0;
+    }
+
+
+    $find = ['{{id}}', '{{name}}', '{{courseid}}', '{{userid}}', '{{cmid}}', '{{sesskey}}', '{{responseid}}'];
+    $replace = [$question->id, $question->name, $COURSE->id, $USER->id, $question->context->instanceid, $sesskey, $responseid];
     $js = str_replace($find, $replace, $js);
     return $js;
 }

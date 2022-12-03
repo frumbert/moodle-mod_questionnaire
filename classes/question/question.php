@@ -929,7 +929,7 @@ abstract class question {
 
         $pagetags->fieldset = (object)['id' => $this->id, 'class' => $displayclass];
 
-        $pagetags->javascript = questionnaire_question_javascript($this);
+        $pagetags->javascript = questionnaire_question_javascript($this, $response);
 
         // Do not display the info box for the label question type.
         if ($this->type_id != QUESSECTIONTEXT) {

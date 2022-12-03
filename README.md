@@ -97,6 +97,7 @@ Javascript has the following fields that can be included in the script, replaced
 * `{{userid}}` - The user id (integer)
 * `{{cmid}}` - The module instance number (integer)
 * `{{sesskey}}` - The session key, useful for ajax scripts
+* `{{responseid}}` - The current response->id (if set)
 
 > To support more variables, modify `questionnaire_question_javascript()` in `lib.php`
 
