@@ -3416,7 +3416,10 @@ class questionnaire {
                             $modality = '';
                             $content = $choice->content;
                             $osgood = false;
-                            if (\mod_questionnaire\question\rate::type_is_osgood_rate_scale($choice->precise)) {
+                            $table = false;
+                            if (\mod_questionnaire\question\rate::type_is_table_rate_scale($choice->precise)) {
+                                $table = true;
+                            } else if (\mod_questionnaire\question\rate::type_is_osgood_rate_scale($choice->precise)) {
                                 $osgood = true;
                             }
                             if (preg_match("/^[0-9]{1,3}=/", $content, $ndd)) {
@@ -3758,8 +3761,8 @@ class questionnaire {
                 $groupname = get_string('allparticipants');
             }
         }
+        $table = new html_table();
         if ($this->survey->feedbackscores) {
-            $table = new html_table();
             $table->size = [null, null];
             $table->align = ['left', 'right', 'right'];
             $table->head = [];

@@ -81,24 +81,6 @@ class rate extends question {
         return 'mod_questionnaire/response_rate';
     }
 
-    // public function allows_dependents() {
-    //     return $this->normal_rate_scale(); // normal = true; other = false
-    // }
-
-    // this won't work because you can't store named degrees - needs better db structure
-    // protected function get_dependency_options() {
-    //     $options = [];
-    //     if ($this->name != '') {
-    //         foreach ($this->choices as $ch_index => $ch_obj) {
-    //             foreach ($this->nameddegrees as $nd_label => $nd_value) {
-    //                 $key = $this->id . ',' . $ch_index . '.' . $nd_label;
-    //                 $options[$key] = $this->name . '->' . $ch_obj->content . '->' . $nd_value;
-    //             }
-    //         }
-    //     }
-    //     return $options;
-    // }
-
     /**
      * Return true if rate scale type is set to "Normal".
      * @param int $scaletype
@@ -136,6 +118,15 @@ class rate extends question {
     }
 
     /**
+     * Return true if rate scale type is set to "Table".
+     * @param int $scaletype
+     * @return bool
+     */
+    public static function type_is_table_rate_scale($scaletype) {
+        return ($scaletype == 4);
+    }
+
+    /**
      * Return true if rate scale type is set to "Normal".
      * @return bool
      */
@@ -144,11 +135,11 @@ class rate extends question {
     }
 
     /**
-     * Return true if rate scale type is set to "N/A column".
+     * Return true if rate scale type is set to "N/A column" or "Table (Checkboxes)".
      * @return bool
      */
     public function has_na_column() {
-        return self::type_is_na_column($this->precise);
+        return self::type_is_na_column($this->precise) || self::type_is_table_rate_scale($this->precise);
     }
 
     /**
@@ -168,6 +159,15 @@ class rate extends question {
     }
 
     /**
+     * Return true if rate scale type is set to "table".
+     * @return bool
+     */
+    public function table_rate_scale() {
+        return self::type_is_table_rate_scale($this->precise);
+    }
+
+
+    /**
      * True if question type supports feedback options. False by default.
      */
     public function supports_feedback() {
@@ -179,7 +179,7 @@ class rate extends question {
      */
     public function valid_feedback() {
         return $this->supports_feedback() && $this->has_choices() && $this->required() && !empty($this->name) &&
-            ($this->normal_rate_scale() || $this->osgood_rate_scale()) && !empty($this->nameddegrees);
+            ($this->normal_rate_scale() || $this->table_rate_scale() || $this->osgood_rate_scale()) && !empty($this->nameddegrees);
     }
 
     /**
@@ -217,9 +217,9 @@ class rate extends question {
         $choicetags = new \stdClass();
         $choicetags->qelements = [];
 
-        $disabled = '';
+        $disabled = 0;
         if ($blankquestionnaire) {
-            $disabled = ' disabled="disabled"';
+            $disabled = 1;
         }
         if (!empty($data) && ( !isset($data->{'q'.$this->id}) || !is_array($data->{'q'.$this->id}) ) ) {
             $data->{'q'.$this->id} = [];
@@ -228,6 +228,11 @@ class rate extends question {
         // Check if rate question has one line only to display full width columns of choices.
         $nocontent = false;
         $nameddegrees = count($this->nameddegrees);
+        $input_tag = 'radio';
+        if ($this->table_rate_scale()) {
+            $input_tag = 'checkbox';
+            $choicetags->qelements['initjs'] = $this->id;
+        }
         $n = [];
         $v = [];
         $maxndlen = 0;
@@ -277,6 +282,7 @@ class rate extends question {
 
         if ($this->has_na_column()) {
             $na = get_string('notapplicable', 'questionnaire');
+            $na = format_text($na, FORMAT_HTML, ['noclean' => true]); // to match other col headers
         } else {
             $na = '';
         }
@@ -322,7 +328,7 @@ class rate extends question {
         }
         if ($na) {
             $choicetags->qelements['headerrow']['cols'][] = ['colwidth' => $colwidth, 'coltext' => $na];
-            $collabel[$j] = $na;
+            $collabel[$j] = $na; // $j being the last one
         }
 
         $num = 0;
@@ -347,27 +353,35 @@ class rate extends question {
                 $content = $choice->content;
                 if ($this->osgood_rate_scale()) {
                     list($content, $contentright) = array_merge(preg_split('/[|]/', $content), array(' '));
+                } else if ($this->table_rate_scale()) {
+                    $order = 'table_rate_click(this)'; //reset per row
                 }
                 $cols[] = ['colstyle' => 'text-align: '.$textalign.';',
                            'coltext' => format_text($content, FORMAT_HTML, ['noclean' => true]).'&nbsp;'];
 
                 $bg = 'c0 raterow';
-                if (($nbchoices > 1) && !$this->no_duplicate_choices()  && !$blankquestionnaire) {
+                if (($nbchoices > 1) && !$this->no_duplicate_choices() && !$blankquestionnaire) {
                     $checked = ' checked="checked"';
                     $completeclass = 'notanswered';
                     $title = '';
-                    if ($notcomplete && isset($response->answers[$this->id][$cid]) &&
-                        ($response->answers[$this->id][$cid]->value == -999)) {
+                    $is_unset = isset($response->answers[$this->id][$cid]) && ($response->answers[$this->id][$cid]->value == -999);
+                    if ($notcomplete && $is_unset) {
                         $completeclass = 'notcompleted';
                         $title = get_string('pleasecomplete', 'questionnaire');
                     }
+
                     // Set value of notanswered button to -999 in order to eliminate it from form submit later on.
-                    $colinput = ['name' => $str, 'value' => -999];
-                    if (!empty($checked)) {
+                    $colinput = ['name' => $str, 'value' => -999, 'tag' => $input_tag];
+                    if (!empty($checked) && $is_unset) {
+                        // only if it doesn't have a value yet
+                        // (you can get away with setting the intiial box checked for radios since it takes the last value set; not so with checkboxes)
                         $colinput['checked'] = true;
                     }
                     if (!empty($order)) {
                         $colinput['onclick'] = $order;
+                    }
+                    if ($this->table_rate_scale()) {
+                        $colinput['name'] = ''; // because we write a hidden field with this name (we don't want an array)
                     }
                     $cols[] = ['colstyle' => 'width:1%;', 'colclass' => $completeclass, 'coltitle' => $title,
                         'colinput' => $colinput];
@@ -376,34 +390,62 @@ class rate extends question {
                     reset($this->nameddegrees);
                 }
                 for ($j = 1; $j <= $this->length + $this->has_na_column(); $j++) {
+                    if ($this->table_rate_scale()) {
+                        $order = 'table_rate_click(this)';
+                    }
                     if (!isset($collabel[$j])) {
                         // If not using this value, continue.
                         continue;
                     }
                     $col = [];
-                    $checked = '';
-                    // If isna column then set na choice to -1 value. This needs work!
+                    $checked = 0;
+                    /* ------------------------CONVENTION------------------------------ */
+                    /* in NAMED VALUES the value of the inputs starts at 0              */
+                    /* in REGULAR      the value of the inputs starts at 1              */
+                    /* The N/A column is set to a value of -1                           */
+                    /* The 'not set' column is set to a value of -999                   */
+                    /* ---------------------------------------------------------------- */
                     if (!empty($this->nameddegrees) && (key($this->nameddegrees) !== null)) {
                         $value = key($this->nameddegrees);
                         next($this->nameddegrees);
                     } else {
                         $value = ($j <= $this->length ? $j : -1);
                     }
-                    if (isset($response->answers[$this->id][$cid]) && ($value == $response->answers[$this->id][$cid]->value)) {
-                        $checked = ' checked="checked"';
+                    $ans = -999;
+                    if (isset($response->answers[$this->id][$cid])) {
+                        $ans = intval($response->answers[$this->id][$cid]->value);
+                        if ($this->table_rate_scale() && $ans > -1) {
+                            // answer is the sum of the PowerOfTwo value of the checked boxes
+                            $chk = 2 ** $value;
+                            // chk BITWISE-AND ans
+                            if ($chk & $ans) {
+                                $checked = 1;
+                            }
+
+                        } else if ($value == $ans) { // loose value comparison
+                            $checked = 1;
+                        }
                     }
+                    $input_name = $str;
+                    if ($this->table_rate_scale()) {
+                        $input_name = ''; // an unnamed field won't submit a value; the only named field per row is the starting input, which is a hidden field
+                        if ($j === 1) {
+                            $col['colhidden'] = [
+                                "name" => "q{$this->id}_$cid",
+                                "value" => $ans
+                            ];
+                        }
+                    }
+                    // WTF in mustache if a variable name isn't found in the current context it is assumed from the parent context.. so they have to be specifially named!
                     $col['colstyle'] = 'text-align:center';
                     $col['colclass'] = $bg;
                     $col['colhiddentext'] = get_string('option', 'questionnaire', $j);
-                    $col['colinput']['name'] = $str;
+                    $col['colinput']['tag'] = $input_tag;
+                    $col['colinput']['name'] = $input_name;
                     $col['colinput']['value'] = $value;
                     $col['colinput']['id'] = $str.'_'.$value;
-                    if (!empty($checked)) {
-                        $col['colinput']['checked'] = true;
-                    }
-                    if (!empty($disabled)) {
-                        $col['colinput']['disabled'] = true;
-                    }
+                    $col['colinput']['checked'] = $checked;
+                    $col['colinput']['disabled'] = $disabled;
                     if (!empty($order)) {
                         $col['colinput']['onclick'] = $order;
                     }
@@ -413,6 +455,7 @@ class rate extends question {
                     } else {
                         $bg = 'c0 raterow';
                     }
+
                     $cols[] = $col;
                 }
                 if ($this->osgood_rate_scale()) {
@@ -437,6 +480,7 @@ class rate extends question {
         $resptags = new \stdClass();
         $resptags->headers = [];
         $resptags->rows = [];
+        $resptags->id = $response->id;
 
         if (!isset($response->answers[$this->id])) {
             $response->answers[$this->id][] = new \mod_questionnaire\responsetype\answer\answer();
@@ -506,6 +550,7 @@ class rate extends question {
 
         foreach ($this->choices as $cid => $choice) {
             $rowobj = new \stdClass();
+            //$rowobj->debug = 'response->'. $response->id .' q->' . $this->id . ' choice->' . $cid . (!empty($this->nameddegrees)) ? ' named-degrees' : '';
             // Do not print column names if named column exist.
             if (!array_key_exists($cid, $cidnamed)) {
                 $str = 'q'."{$this->id}_$cid";
@@ -520,21 +565,55 @@ class rate extends question {
                 $rowobj->content = format_text($content, FORMAT_HTML, ['noclean' => true]).'&nbsp;';
                 $bg = 'c0';
                 $cols = [];
+                /* ------------------------CONVENTION------------------------------ */
+                /* in NAMED VALUES the value of the inputs starts at 0              */
+                /* in REGULAR      the value of the inputs starts at 1              */
+                /* The N/A column is set to a value of -1                           */
+                /* The 'not set' column is set to a value of -999                   */
+                /* ---------------------------------------------------------------- */
                 if (!empty($this->nameddegrees)) {
                     $this->length = count($this->nameddegrees);
                     reset($this->nameddegrees);
                 }
+
                 for ($j = 1; $j <= $this->length; $j++) {
                     $cellobj = new \stdClass();
                     if (isset($response->answers[$this->id][$cid])) {
+                        $ans = intval($response->answers[$this->id][$cid]->value);
                         if (!empty($this->nameddegrees)) {
-                            if ($response->answers[$this->id][$cid]->value == key($this->nameddegrees)) {
-                                $cellobj->checked = 1;
+                            $match = (intval(key($this->nameddegrees)));
+                            if ($this->table_rate_scale() && $ans > -1) {
+                                $chk = 2 ** $match;
+                                //$cellobj->debug ='A chk('.$chk.') named('.$match.') & ans('.$ans.')';
+                                if ($chk & $ans) {
+                                    $cellobj->checked = 1;
+                                }
+                            } else {
+                                //$cellobj->debug = 'B named('.$match.') = ans('.$ans.')';
+                                if ($ans == $match) {
+                                    $cellobj->checked = 1;
+                                }
                             }
-                            next($this->nameddegrees);
-                        } else if ($j == $response->answers[$this->id][$cid]->value) {
-                            $cellobj->checked = 1;
+
+                        } else {
+                            $match = $j;
+                            if ($this->table_rate_scale() && $ans > -1) {
+                                $chk = 2 ** ($match);
+                                //$cellobj->debug = 'C chk('.$chk.') j('.$match.') & ans('.$ans.')';
+                                if ($chk & $ans) {
+                                    $cellobj->checked = 1;
+                                }
+                            } else {
+                                //$cellobj->debug = 'D j('.$match.') = ans('.$ans.')';
+                                if ($ans == $match) {
+                                    $cellobj->checked = 1;
+                                }
+                            }
+
                         }
+                        next($this->nameddegrees);
+                    } else {
+                        //$cellobj->debug = 'j('.$j.') no-answer';
                     }
                     $cellobj->str = $str.$j.$uniquetag++;
                     $cellobj->bg = $bg;
@@ -545,15 +624,18 @@ class rate extends question {
                     } else {
                         $bg = 'c0';
                     }
+                    $cellobj->tag = $this->table_rate_scale() ? 'checkbox' : 'radio';
                     $cols[] = $cellobj;
                 }
                 if ($this->has_na_column()) { // N/A column.
                     $cellobj = new \stdClass();
+                    $cellobj->debug = '';
                     if ($checkedna) {
                         $cellobj->checked = 1;
                     }
                     $cellobj->str = $str.$j.$uniquetag++.'na';
                     $cellobj->bg = $bg;
+                    $cellobj->tag = $this->table_rate_scale() ? 'checkbox' : 'radio';
                     $cols[] = $cellobj;
                 }
                 $rowobj->cols = $cols;
@@ -700,7 +782,9 @@ class rate extends question {
         $precoptions = array("0" => get_string('normal', 'questionnaire'),
                              "1" => get_string('notapplicablecolumn', 'questionnaire'),
                              "2" => get_string('noduplicates', 'questionnaire'),
-                             "3" => get_string('osgood', 'questionnaire'));
+                             "3" => get_string('osgood', 'questionnaire'),
+                             "4" => get_string('table', 'questionnaire')
+                             );
         $mform->addElement('select', 'precise', get_string('kindofratescale', 'questionnaire'), $precoptions);
         $mform->addHelpButton('precise', 'kindofratescale', 'questionnaire');
         $mform->setType('precise', PARAM_INT);

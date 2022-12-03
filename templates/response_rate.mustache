@@ -57,7 +57,7 @@
     }
 }}
 <!-- Begin HTML generated from response_rate template. -->
-<div class="questionnaire_response questionnaire_radio">
+<div class="questionnaire_response questionnaire_{{tag}}" data-response-id="{{id}}">
 <table class="individual" style="border: 0; border-spacing: 1px; padding: 0; width:{{twidth}}">
   <tbody>
     <tr>
@@ -70,16 +70,16 @@
     </tr>
     {{#rows}}
     <tr>
-        <td style="text-align:{{textalign}}">{{{content}}}</td>
+        <td style="text-align:{{textalign}}">{{{content}}} {{debug}}</td>
         {{#cols}}
         {{#checked}}
-        <td style="text-align:center;" class="selected">
-            <span class="selected"><input type="radio" name="{{str}}" checked="checked" disabled="disabled"/></span>
+        <td style="text-align:center;" class="selected">{{debug}}
+            <span class="selected"><input type="{{tag}}" name="{{str}}" checked="checked" disabled="disabled"/></span>
         </td>
         {{/checked}}
         {{^checked}}
-        <td style="text-align:center;" class="{{bg}}">
-            <span class="unselected"><input type="radio" disabled="disabled" name="{{str}}" onclick="this.checked=false;" /></span>
+        <td style="text-align:center;" class="{{bg}}">{{debug}}
+            <span class="unselected"><input type="{{tag}}" disabled="disabled" name="{{str}}" onclick="this.checked=false;" /></span>
         </td>
         {{/checked}}
         {{/cols}}

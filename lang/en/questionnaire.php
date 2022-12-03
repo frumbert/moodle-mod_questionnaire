@@ -610,6 +610,7 @@ $string['surveyowner'] = 'You must be a questionnaire owner to perform this oper
 $string['surveyresponse'] = 'Response from questionnaire';
 $string['template'] = 'Template';
 $string['templatenotviewable'] = 'Template questionnaires are not viewable.';
+$string['table'] = 'Table (Checkboxes)';
 $string['text'] = 'Question Text';
 $string['textareacolumns'] = 'Textarea columns';
 $string['textareacolumns_help'] = 'This question will display a plain text box with **x** *Textarea columns* (or area *width*) and **y** *Textarea rows* (number of text

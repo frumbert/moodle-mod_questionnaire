@@ -181,6 +181,55 @@ function other_rate_uncheck(name, value) {
     }
 }
 
+// get (or create) the hidden field for this row
+function table_get_hidden(row, node) {
+    let hidden = row.querySelector('input[type="hidden"]')
+    if (!hidden) {
+        hidden = document.createElement('input');
+        hidden.type='hidden'; node.insertAdjacentElement('beforebegin',hidden);
+        hidden.name = node.name; hidden.value = node.value;
+        node.removeAttribute('name');
+    }
+    return hidden;
+}
+
+// executed on render from within question_rate.mustache (semi-not-needed)
+function table_rate_init(id) {
+    const rows = document.querySelectorAll(`#qn-${id} .questionnaire-rate-table tbody>tr.raterow`);
+    for (const row of rows) {
+        const cb = row.querySelectorAll('input[type="checkbox"]');
+        const first = cb[0];
+        let hidden = table_get_hidden(row, first);
+        if (first.checked) first.indeterminate = true; // visual only
+    }
+}
+
+// in a Rate question of type Table, a checkbox needs to calculate the overall row score (store a bitmask as a single integer)
+function table_rate_click(el) {
+    const row = el.closest('tr');
+    let cb = row.querySelectorAll('input[type="checkbox"]');
+    let first = cb[0], last = cb[cb.length -1];
+    let hidden = table_get_hidden(row, first);
+    first.indeterminate = false; // we don't know yet
+    if (el === last) { // n/a unchecks others
+        for (const node of cb) if (node!==last) node.checked = false;
+        hidden.value = last.value; console.info('n/a set value', last.value);
+        return;
+    } else if (el === first) { // setting initial unchecks others
+        first.indeterminate = true;
+        for (const node of cb) if (node!==first) node.checked = false;
+        hidden.value = first.value; console.info('first set value', first.value);
+        return;
+    } else { // toggle updates bitmask
+        let sum = 0;
+        for (const node of cb) {
+            if (node===first||node===last) { node.checked = false; continue; }
+            sum += node.checked ? Math.pow(2, parseInt(node.value,10)) : 0;
+        }
+        hidden.value = sum;  console.info('sum set value', sum);
+    }
+}
+
 // Empty an !other text input when corresponding Check Box is clicked (supposedly to empty it).
 /* exported checkbox_empty */
 function checkbox_empty(name) {

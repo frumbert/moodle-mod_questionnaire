@@ -139,10 +139,11 @@
     <tr class="raterow">
       {{#cols}}
       <td {{#colstyle}}style="{{.}}"{{/colstyle}}{{#colclass}} class="{{.}}"{{/colclass}}{{#coltitle}} title="{{.}}"{{/coltitle}}
-			{{#colinput}} onclick="if('{{id}}'.length>0) document.getElementById('{{id}}').click()"{{/colinput}}>
+			{{#colinput}} onclick="if('{{id}}'.length>0 && event.target.tagName!=='INPUT') document.getElementById('{{id}}').click()"{{/colinput}}>
+        {{#colhidden}}<input type="hidden" name="{{name}}" value="{{value}}">{{/colhidden}}
         {{#coltext}}{{{.}}}{{/coltext}}
         {{#colhiddentext}}<span class="accesshide">{{{.}}}</span>{{/colhiddentext}}
-        {{#colinput}}<input type="radio" name="{{name}}" id="{{id}}" value="{{value}}"{{#checked}} checked="checked"{{/checked}}{{#disabled}} disabled="disabled"{{/disabled}}{{#onclick}} onclick="{{.}}"{{/onclick}}>
+        {{#colinput}}<input type="{{tag}}"{{#name}} name="{{name}}"{{/name}} id="{{id}}" value="{{value}}"{{#checked}} checked="checked"{{/checked}}{{#disabled}} disabled="disabled"{{/disabled}}{{#onclick}} onclick="{{.}}"{{/onclick}}{{{attributes}}}>
         {{#label}}<label for="{{id}}" class="accesshide">{{{.}}}</label>{{/label}}{{/colinput}}
       </td>
       {{/cols}}
@@ -152,3 +153,6 @@
 </table>
 {{/qelements}}
 <!-- End HTML generated from question_rate template. -->
+{{#js}}
+{{#qelements.initjs}}table_rate_init({{qelements.initjs}});{{/qelements.initjs}}
+{{/js}}
