@@ -70,11 +70,21 @@ This code randomises the order of the answers (except the last one, which is whe
 ```js
 const shuffleButt = document.querySelector("#qn-{{id}} .qn-answer");
 
+// remove any comment nodes
 for (node of shuffleButt.childNodes) if (node.nodeType === Node.COMMENT_NODE) node.parentNode.removeChild(node);
 
-for (var i = shuffleButt.children.length - 1; i >= 0; i--) {
+// move the last child into a temporary dom
+const fragment = new DocumentFragment();
+const other = shuffleButt.children[shuffleButt.children.length-1];
+fragment.appendChild(other);
+
+// shuffle the remaining children (fisher yates method)
+for (var i = shuffleButt.children.length; i >= 0; i--) {
     shuffleButt.appendChild(shuffleButt.children[Math.random() * i | 0]);
 }
+
+// re-append the 'other' node at the bottom
+shuffleButt.appendChild(other);
 ```
 
 Javascript has the following fields that can be included in the script, replaced at runtime:
