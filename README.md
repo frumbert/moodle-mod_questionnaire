@@ -17,8 +17,8 @@ The purpose of this fork is to INTRODUCE new features.
 ## Question Type changes
 
 * a RATE question has a new sub-type of `Table (checkboxes)`.
+* Checkboxes require named degrees and imply N/A column
 
-> Rate ranking is a work-in-progress, for now skipped
 
 ## Per-Question Javascript
 
@@ -100,6 +100,34 @@ Javascript has the following fields that can be included in the script, replaced
 * `{{responseid}}` - The current response->id (if set)
 
 > To support more variables, modify `questionnaire_question_javascript()` in `lib.php`
+
+### webservice calls for javascript
+
+I needed to be able to look up completions for the user who was logged on; if a user had completed any work within a topic, it would tick a box with the label matching the name of the topic. So there are external ajax functions defined in `externallib.php` and exposed through `services.php`. Whilst this call might not be useful to you, you could follow the same pattern to support your own javascript lookups.
+
+```js
+require(['core/ajax'], function(Ajax) {
+    var promise;
+
+    promise = Ajax.call([{
+        methodname: 'mod_questionnaire_section_completions_for_course',
+        args: {
+            courseid:'aa_surgeon'
+        }
+    }], true, true, true, 0);
+
+    promise[0].then(data => {
+        return JSON.parse(data.output);
+    }).then(result => {
+        for (node of document.querySelectorAll('#qn-{{id}} .qn-answer input')) {
+            // textContent may include \0A byte; trim() takes care of whitespace including line breaks
+            let text = node.nextElementSibling.textContent.trim().toLowerCase();
+            let match = result.results.find(value => value.name.toLowerCase() === text );
+            if (match) node.checked = match.participated;
+        }
+    }).fail(console.warn);
+});
+```
 
 # Original README
 
