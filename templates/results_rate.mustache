@@ -95,7 +95,7 @@
                 <tbody>
                 <tr>
                     {{#ranks}}
-                        <td class="smalltext" style="text-align:center; width:{{width}};">{{{text}}}</td>
+                        <td class="smalltext" style="text-align:center; max-width:{{width}}; width:{{width}};overflow-wrap: anywhere; word-wrap: anywhere; hyphens: auto;">{{{text}}}</td>
                     {{/ranks}}
                 </tr>
                 </tbody>
@@ -118,7 +118,8 @@
         {{/column1}}
         {{#column2}}
             <td class="cell" style="text-align:{{align}}; width:{{width}};" scope="col">
-                {{#imageurl}}<img style="height:12px; width: 6px;{{#margin}} {{margin}};{{/margin}}" alt="" src="{{imageurl}}" />{{/imageurl}}
+            {{#hide}}    {{#imageurl}}<img style="height:12px; width: 6px;{{#margin}} {{margin}};{{/margin}}" alt="" src="{{imageurl}}" />{{/imageurl}}    {{/hide}}
+                <input disabled type="range" min="0" max="100" value="{{value}}" style="width:100%;">
             </td>
         {{/column2}}
         {{#column3}}

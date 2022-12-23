@@ -560,7 +560,9 @@ class rank extends responsetype {
         }
 
         $imageurl = $CFG->wwwroot.'/mod/questionnaire/images/hbar.gif';
+        // $imageurl = "http://placekitten.com/100/10";
         $spacerimage = $CFG->wwwroot . '/mod/questionnaire/images/hbartransp.gif';
+
         $llength = $this->question->length;
         if (!$llength) {
             $llength = 5;
@@ -653,6 +655,7 @@ class rank extends responsetype {
                         }
                     } else {
                         $margin = '';
+                        $marginposition = 0;
                     }
 
                     if ($osgood) {
@@ -680,6 +683,7 @@ class rank extends responsetype {
                         $choicecol2->spacerimage = $spacerimage;
                         $choicecol2->margin = $margin;
                         $choicecol2->marginpdf = $marginpdf;
+                        $choicecol2->value = $marginposition * 100;
                         $choicecol3 = new \stdClass();
                         $choicecol3->width = $header3->width;
                         $choicecol3->pdfwidth = $header3->pdfwidth;
@@ -716,6 +720,7 @@ class rank extends responsetype {
                         $choicecol2->spacerimage = $spacerimage;
                         $choicecol2->margin = $margin;
                         $choicecol2->marginpdf = $marginpdf;
+                        $choicecol2->value = $marginposition * 100;
                         $choicecol3 = new \stdClass();
                         $choicecol3->width = $header3->width;
                         $choicecol3->pdfwidth = $header3->pdfwidth;
