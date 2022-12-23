@@ -158,15 +158,39 @@ class rank extends responsetype {
             }
         }
 
-        // For nameddegrees, need an array by degree value of positions (zero indexed).
+        // For nameddegrees, need an array by degree value of positions (MIGHT be zero indexed).
         $rankvalue = [];
         if (!empty($this->question->nameddegrees)) {
             $rankvalue = array_flip(array_keys($this->question->nameddegrees));
         }
 
         $isrestricted = ($this->question->length < count($this->question->choices)) && $this->question->no_duplicate_choices();
-        // Usual case.
-        if (!$isrestricted) {
+
+        if ($this->question->table_rate_scale()) { // checkboxes
+            if (empty($this->question->nameddegrees)) for ($i=0;$i<$this->question->length;$i++) $rankvalue[$i] = 0; // ensure thre is a rankvalue
+            $sql = "SELECT r.id, c.id as choiceid, c.content, r.rankvalue
+                    FROM {questionnaire_quest_choice} c
+                    INNER JOIN {".static::response_table()."} r
+                    ON c.id = r.choice_id
+                    WHERE c.question_id = ? AND (r.rankvalue=-1 OR r.rankvalue>=0){$rsql}
+                    ORDER BY c.id";
+            $results = $DB->get_records_sql($sql, array_merge([$this->question->id], $params));
+            $output = [];
+            foreach ($results as &$result) {
+                if (empty($output[$result->content])) $output[$result->content] = array_fill_keys($rankvalue, 0);
+                foreach ($rankvalue as $rank => $ignore) { // we only care about the key
+                    $intrankvalue = intval($result->rankvalue);
+                    if ($intrankvalue === -1) {
+                        $output[$result->content][-1] += 1;
+                    } else if ((2**$rank) & $intrankvalue) {
+                        $output[$result->content][$rank] += 1;
+                    }
+                }
+            }
+            return $output;
+        
+        } else if (!$isrestricted) { // radios
+            // Usual case.
             if (!empty ($rankvalue)) {
                 $sql = "SELECT r.id, c.content, r.rankvalue, c.id AS choiceid
                 FROM {questionnaire_quest_choice} c, {".static::response_table()."} r
@@ -210,7 +234,7 @@ class rank extends responsetype {
             }
             return $results;
             // Case where scaleitems is less than possible choices.
-        } else {
+        } else { 
             $sql = "SELECT c.id, c.content, a.sum, a.num
                     FROM {questionnaire_quest_choice} c
                     INNER JOIN
@@ -301,34 +325,39 @@ class rank extends responsetype {
         }
 
         if ($rows = $this->get_results($rids, $sort, $anonymous)) {
-            $stravgvalue = ''; // For printing table heading.
-            foreach ($this->counts as $key => $value) {
-                $ccontent = $key;
-                $avgvalue = '';
-                if (array_key_exists($ccontent, $rows)) {
-                    $avg = $rows[$ccontent]->average;
-                    $this->counts[$ccontent]->num = $rows[$ccontent]->num;
-                    if (isset($rows[$ccontent]->averagevalue)) {
-                        $avgvalue = $rows[$ccontent]->averagevalue;
-                        $osgood = false;
-                        if ($this->question->osgood_rate_scale()) { // Osgood's semantic differential.
-                            $osgood = true;
-                        }
-                        if ($stravgvalue == '' && !$osgood) {
-                            $stravgvalue = ' ('.get_string('andaveragevalues', 'questionnaire').')';
+            if ($this->question->table_rate_scale()) {
+                $output = $this->mkrescount($rids, $rows, $sort);
+
+            } else {
+                $stravgvalue = ''; // For printing table heading.
+                foreach ($this->counts as $key => $value) {
+                    $ccontent = $key;
+                    $avgvalue = '';
+                    if (array_key_exists($ccontent, $rows)) {
+                        $avg = $rows[$ccontent]->average;
+                        $this->counts[$ccontent]->num = $rows[$ccontent]->num;
+                        if (isset($rows[$ccontent]->averagevalue)) {
+                            $avgvalue = $rows[$ccontent]->averagevalue;
+                            $osgood = false;
+                            if ($this->question->osgood_rate_scale()) { // Osgood's semantic differential.
+                                $osgood = true;
+                            }
+                            if ($stravgvalue == '' && !$osgood) {
+                                $stravgvalue = ' ('.get_string('andaveragevalues', 'questionnaire').')';
+                            }
+                        } else {
+                            $avgvalue = null;
                         }
                     } else {
-                        $avgvalue = null;
+                        $avg = 0;
                     }
-                } else {
-                    $avg = 0;
+                    $this->counts[$ccontent]->avg = $avg;
+                    $this->counts[$ccontent]->avgvalue = $avgvalue;
                 }
-                $this->counts[$ccontent]->avg = $avg;
-                $this->counts[$ccontent]->avgvalue = $avgvalue;
+                $output1 = $this->mkresavg($sort, $stravgvalue);
+                $output2 = $this->mkrescount($rids, $rows, $sort);
+                $output = (object)array_merge((array)$output1, (array)$output2);
             }
-            $output1 = $this->mkresavg($sort, $stravgvalue);
-            $output2 = $this->mkrescount($rids, $rows, $sort);
-            $output = (object)array_merge((array)$output1, (array)$output2);
         } else {
             $output = (object)['noresponses' => true];
         }
@@ -442,7 +471,8 @@ class rank extends responsetype {
 
         $stravgrank = get_string('averagerank', 'questionnaire');
         $osgood = false;
-        if ($this->question->precise == 3) { // Osgood's semantic differential.
+
+        if ($this->question->precise == 3) { // or $this->question->osgood_rate_scale()) {
             $osgood = true;
             $stravgrank = get_string('averageposition', 'questionnaire');
         }
@@ -632,7 +662,8 @@ class rank extends responsetype {
                             $content = $contents->text;
                         }
                     }
-                    if ($osgood) {
+                    if ($osgood) { 
+                        // JR JUNE 2012 do not display meaningless average rank values for Osgood.
                         $choicecol1 = new \stdClass();
                         $choicecol1->width = $header1->width;
                         $choicecol1->pdfwidth = $header1->pdfwidth;
@@ -655,7 +686,6 @@ class rank extends responsetype {
                             format_text($contentright, FORMAT_HTML, ['noclean' => true]) . '</div>';
                         $pagetags->averages->choiceaverages[] = (object)['column1' => $choicecol1, 'column2' => $choicecol2,
                             'column3' => $choicecol3];
-                        // JR JUNE 2012 do not display meaningless average rank values for Osgood.
                     } else if ($avg || ($nbna != 0)) {
                         $stravgval = '';
                         if ($avg) {
@@ -663,7 +693,7 @@ class rank extends responsetype {
                                 $stravgval = '('.sprintf('%.1f', $avgvalue).')';
                             }
                             $stravgval = sprintf('%.1f', $avg).'&nbsp;'.$stravgval;
-                            if ($isna) {
+                            if ($isna && isset($header4)) {
                                 $choicecol4 = new \stdClass();
                                 $choicecol4->width = $header4->width;
                                 $choicecol4->pdfwidth = $header4->pdfwidth;
@@ -736,11 +766,17 @@ class rank extends responsetype {
     }
 
     /**
+     * VIEW ALL RESPONSES -->> SUMMARY --> [responses, each choice, total]
      * Return a structure for counts.
      * @param array $rids
      * @param array $rows
      * @param string $sort
      * @return \stdClass
+     *
+     *  this function is utter trash
+     *  really needs to return an object that can be rendered by a template
+     * & refactored for internal consistency, use enums, remove repetative code etc
+     *
      */
     private function mkrescount($rids, $rows, $sort) {
         // Display number of responses to Rate questions - see http://moodle.org/mod/forum/discuss.php?d=185106.
@@ -794,21 +830,27 @@ class rank extends responsetype {
         if (!empty($this->question->nameddegrees)) {
             $rankvalue = array_flip(array_keys($this->question->nameddegrees));
         }
-        foreach ($rows as $row) {
-            $choiceid = $row->id;
-            foreach ($choices as $choice) {
-                if ($choice->choiceid == $choiceid) {
-                    $n = 0;
-                    for ($i = 1; $i <= $nbranks; $i++) {
-                        if ((isset($rankvalue[$choice->rankvalue]) && ($rankvalue[$choice->rankvalue] == ($i - 1))) ||
-                            (empty($rankvalue) && ($choice->rankvalue == $i))) {
-                            $n++;
-                            if (!isset($ranks[$choice->content][$i])) {
+
+        if ($this->question->table_rate_scale()) {
+            // each row is CONTENT => [RANKVALUES => COUNT]
+            $ranks = $rows;
+        } else {
+            foreach ($rows as $row) {
+                $choiceid = $row->id;
+                foreach ($choices as $choice) {
+                    if ($choice->choiceid == $choiceid) {
+                        $n = 0;
+                        for ($i = 1; $i <= $nbranks; $i++) {
+                            if ((isset($rankvalue[$choice->rankvalue]) && ($rankvalue[$choice->rankvalue] == ($i - 1))) ||
+                                (empty($rankvalue) && ($choice->rankvalue == $i))) {
+                                $n++;
+                                if (!isset($ranks[$choice->content][$i])) {
+                                    $ranks[$choice->content][$i] = 0;
+                                }
+                                $ranks[$choice->content][$i] += $n;
+                            } else if (!isset($ranks[$choice->content][$i])) {
                                 $ranks[$choice->content][$i] = 0;
                             }
-                            $ranks[$choice->content][$i] += $n;
-                        } else if (!isset($ranks[$choice->content][$i])) {
-                            $ranks[$choice->content][$i] = 0;
                         }
                     }
                 }
@@ -831,8 +873,12 @@ class rank extends responsetype {
         $n = array();
         foreach ($this->question->nameddegrees as $degree) {
             $content = $degree;
-            $n[$nameddegrees] = format_text($content, FORMAT_HTML, ['noclean' => true]);
+            // $n[$nameddegrees] = format_text($content, FORMAT_HTML, ['noclean' => true]);
+            $n[$nameddegrees] = html_to_text($content); // makes for a nicer layout
             $nameddegrees++;
+        }
+        if ($this->question->table_rate_scale()) {
+            $n[-1] = get_string('notapplicable', 'questionnaire');
         }
         foreach ($this->question->choices as $choice) {
             $contents = questionnaire_choice_values($choice->content);
@@ -864,6 +910,9 @@ class rank extends responsetype {
         if ($osgood) {
             $pagetags->totals->headers[] = (object)['align' => 'left', 'text' => ''];
         }
+        if ($this->question->table_rate_scale()) {
+            $pagetags->totals->headers[] = (object)['align' => 'center', 'text' => $n[-1]];
+        }
         $pagetags->totals->headers[] = (object)['align' => 'center', 'text' => $strtotal];
         if ($isrestricted) {
             $pagetags->totals->headers[] = (object)['align' => 'center', 'text' => get_string('notapplicable', 'questionnaire')];
@@ -876,67 +925,85 @@ class rank extends responsetype {
         $pagetags->totals->choices = [];
         foreach ($ranks as $content => $rank) {
             $totalcols = [];
-            // Eliminate potential named degrees on Likert scale.
-            if (!preg_match("/^[0-9]{1,3}=/", $content)) {
-                // First display the list of degrees (named or un-named)
-                // number of NOT AVAILABLE responses for this possible answer.
-                $nbna = $this->counts[$content]->nbna;
-                // TOTAL number of responses for this possible answer.
-                $total = $this->counts[$content]->num;
-                $nbresp = '<strong>'.$total.'</strong>';
-                if ($osgood) {
-                    // Ensure there are two bits of content.
-                    list($content, $contentright) = array_merge(preg_split('/[|]/', $content), array(' '));
-                    $header = reset($pagetags->totals->headers);
-                    $totalcols[] = (object)['align' => $header->align,
-                        'text' => format_text($content, FORMAT_HTML, ['noclean' => true])];
-                } else {
-                    // Eliminate potentially short-named choices.
-                    $contents = questionnaire_choice_values($content);
-                    if ($contents->modname) {
-                        $content = $contents->text;
-                    }
-                    $header = reset($pagetags->totals->headers);
-                    $totalcols[] = (object)['align' => $header->align,
-                        'text' => format_text($content, FORMAT_HTML, ['noclean' => true])];
+            if ($this->question->table_rate_scale()) {
+                $totalcols[0] = (object)['align' => 'left', 'text' => format_text($content, FORMAT_HTML, ['noclean' => true])];
+                $sum = array_sum($rows[$content]);
+                $narank = $rank[-1] ?? 0;
+                $narank = '<b>'.$narank. '</b> ('.round(($narank/$sum)*100).'%)';
+                foreach ($rankvalue as $rv => $index) {
+                    $count = '<b>'.$rank[$rv]. '</b> ('.round(($rank[$rv]/$sum)*100).'%)';
+                    $totalcols[$index+1] = (object)['align' => 'center', 'text' => $count];
                 }
-                // Display ranks/rates numbers.
-                $maxrank = max($rank);
-                for ($i = 1; $i <= $this->question->length; $i++) {
-                    $percent = '';
-                    if (isset($rank[$i])) {
-                        $str = $rank[$i];
-                        if ($total !== 0 && $str !== 0) {
-                            $percent = ' (<span class="percent">'.number_format(($str * 100) / $total).'%</span>)';
-                        }
-                        // Emphasize responses with max rank value.
-                        if ($str == $maxrank) {
-                            $str = '<strong>'.$str.'</strong>';
-                        }
+                // for ($j=count($rankvalue); $j<$this->question->length; $j++) {
+                //     $totalcols[] = (object)['align' => 'center', 'text' => 0];
+                // }
+                $totalcols[] = (object)['align' => 'center', 'text' => $narank];
+                $totalcols[] = (object)['align' => 'center', 'text' => '<b>'.$sum.'</b>'];
+
+            } else {
+
+                // Eliminate potential named degrees on Likert scale.
+                if (!preg_match("/^[0-9]{1,3}=/", $content)) {
+                    // First display the list of degrees (named or un-named)
+                    // number of NOT AVAILABLE responses for this possible answer.
+                    $nbna = $this->counts[$content]->nbna;
+                    // TOTAL number of responses for this possible answer.
+                    $total = $this->counts[$content]->num;
+                    $nbresp = '<strong>'.$total.'</strong>';
+                    if ($osgood) {
+                        // Ensure there are two bits of content.
+                        list($content, $contentright) = array_merge(preg_split('/[|]/', $content), array(' '));
+                        $header = reset($pagetags->totals->headers);
+                        $totalcols[] = (object)['align' => $header->align,
+                            'text' => format_text($content, FORMAT_HTML, ['noclean' => true])];
                     } else {
-                        $str = 0;
+                        // Eliminate potentially short-named choices.
+                        $contents = questionnaire_choice_values($content);
+                        if ($contents->modname) {
+                            $content = $contents->text;
+                        }
+                        $header = reset($pagetags->totals->headers);
+                        $totalcols[] = (object)['align' => $header->align,
+                            'text' => format_text($content, FORMAT_HTML, ['noclean' => true])];
                     }
-                    $header = next($pagetags->totals->headers);
-                    $totalcols[] = (object)['align' => $header->align, 'text' => $str.$percent];
-                }
-                if ($osgood) {
-                    $header = next($pagetags->totals->headers);
-                    $totalcols[] = (object)['align' => $header->align,
-                        'text' => format_text($contentright, FORMAT_HTML, ['noclean' => true])];
-                }
-                $header = next($pagetags->totals->headers);
-                $totalcols[] = (object)['align' => $header->align, 'text' => $nbresp];
-                if ($isrestricted) {
-                    $header = next($pagetags->totals->headers);
-                    $totalcols[] = (object)['align' => $header->align, 'text' => $nbresponses - $total];
-                }
-                if (!$osgood) {
-                    if ($na) {
+                    // Display ranks/rates numbers.
+                    $maxrank = max($rank);
+                    for ($i = 1; $i <= $this->question->length; $i++) {
+                        $percent = '';
+                        if (isset($rank[$i])) {
+                            $str = $rank[$i];
+                            if ($total !== 0 && $str !== 0) {
+                                $percent = ' (<span class="percent">'.number_format(($str * 100) / $total).'%</span>)';
+                            }
+                            // Emphasize responses with max rank value.
+                            if ($str == $maxrank) {
+                                $str = '<strong>'.$str.'</strong>';
+                            }
+                        } else {
+                            $str = 0;
+                        }
                         $header = next($pagetags->totals->headers);
-                        $totalcols[] = (object)['align' => $header->align, 'text' => $nbna];
+                        $totalcols[] = (object)['align' => $header->align, 'text' => $str.$percent];
                     }
-                }
-            } // End named degrees.
+                    if ($osgood) {
+                        $header = next($pagetags->totals->headers);
+                        $totalcols[] = (object)['align' => $header->align,
+                            'text' => format_text($contentright, FORMAT_HTML, ['noclean' => true])];
+                    }
+                    $header = next($pagetags->totals->headers);
+                    $totalcols[] = (object)['align' => $header->align, 'text' => $nbresp];
+                    if ($isrestricted) {
+                        $header = next($pagetags->totals->headers);
+                        $totalcols[] = (object)['align' => $header->align, 'text' => $nbresponses - $total];
+                    }
+                    if (!$osgood) {
+                        if ($na) {
+                            $header = next($pagetags->totals->headers);
+                            $totalcols[] = (object)['align' => $header->align, 'text' => $nbna];
+                        }
+                    }
+                } // End named degrees.
+            }
             $pagetags->totals->choices[] = (object)['totalcols' => $totalcols];
         }
         return $pagetags;
