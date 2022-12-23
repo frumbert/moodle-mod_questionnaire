@@ -332,6 +332,7 @@ $string['nodata'] = 'No data posted.';
 $string['noduplicates'] = 'No duplicate choices';
 $string['noduplicateschoiceserror'] = 'You must enter at least 2 Possible answers for the "No duplicate choices" option!';
 $string['notenoughscaleitems'] = 'You must enter a minimum value of 2 scale items!';
+$string['scaleitemslessthannameddegrees'] = 'The number of scale items is greater than the number of named degrees';
 $string['noneinuse'] = 'This questionnaire does not contain any questions.';
 $string['non_respondents'] = 'Users who have not yet submitted their responses to this questionnaire';
 $string['nopublicsurveys'] = 'No public questionnaires.';

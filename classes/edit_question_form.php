@@ -88,6 +88,10 @@ class edit_question_form extends \moodleform {
                     $errors["allchoices"] = get_string('noduplicateschoiceserror', 'questionnaire');
                 }
             }
+            $ndcount = substr_count($data['allnameddegrees'],PHP_EOL);
+            if ($data['precise'] == 4 && $ndcount>0 && $ndcount<$data['length']) {
+                $errors["length"] = get_string('scaleitemslessthannameddegrees', 'questionnaire');
+            }
         }
 
         return $errors;
