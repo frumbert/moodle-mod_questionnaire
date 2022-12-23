@@ -53,7 +53,7 @@
     {{#selected}}
     <span class="selected">
         {{^pdf}}<input type="radio" name="{{name}}" checked="checked" disabled="disabled" />{{/pdf}}
-        {{#pdf}}&#10003;{{/pdf}} {{{content}}}{{#othercontent}} <span class="response text">{{.}}</span>{{/othercontent}}
+        {{#pdf}}&#10003;{{/pdf}} {{{content}}}{{#othercontent}} <span class="response text">{{{.}}}</span>{{/othercontent}}
     </span>
     {{/selected}}
     {{^selected}}
