@@ -27,6 +27,7 @@
 defined('MOODLE_INTERNAL') || die;
 require_once($CFG->libdir . '/externallib.php');
 require_once($CFG->dirroot . '/mod/questionnaire/lib.php');
+require_once($CFG->dirroot . '/mod/questionnaire/locallib.php');
 require_once($CFG->dirroot . '/mod/questionnaire/questionnaire.class.php');
 
 /**
@@ -121,18 +122,227 @@ class mod_questionnaire_external extends \external_api {
         return $result;
     }
 
-    /**
-     * Describes the submit_questionnaire_response return value.
-     *
-     * @return external_single_structure
-     * @since Moodle 3.0
-     */
-    public static function submit_questionnaire_response_returns() {
+
+
+    /* --------- STORE FEEDBACK TEXT VALUE ----------- */
+
+    public static function submit_questionnaire_feedback_returns() {
         return new \external_single_structure(
             [
-                'submitted' => new \external_value(PARAM_BOOL, 'submitted', true, false, false),
-                'warnings' => new \external_warnings()
+                'output' => new \external_value(PARAM_RAW, 'json object', true, false, true),
             ]
         );
+    }
+    public static function submit_questionnaire_feedback_parameters() {
+        return new \external_function_parameters(
+            [
+                'cmid' => new \external_value(PARAM_INT, 'Course module id'),
+                'responseid' => new \external_value(PARAM_INT, 'Questionnaire response id'),
+                'fieldname' => new \external_value(PARAM_ALPHA, 'Field name to find'),
+                'value' => new \external_value(PARAM_RAW, 'Value to store')
+            ]
+        );
+    }
+    public static function submit_questionnaire_feedback($cmid, $responseid, $fieldname, $value) {
+    global $DB;
+        $output = new \stdClass();
+
+        if (!empty($value)) {
+
+            $context = \context_module::instance($cmid);
+            self::validate_context($context);
+            require_capability('mod/questionnaire:submit', $context);
+
+            $qresponse = $DB->get_record('questionnaire_response', ['id' => $responseid]);
+            // a questionnaire has a sid
+            $questionnaire = $DB->get_record('questionnaire', ['id'=>$qresponse->questionnaireid]);
+            // a sid is a questionnaire_survey id, which questions are bound to
+            $question = $DB->get_record('questionnaire_question', ['surveyid'=>$questionnaire->sid, 'name'=>$fieldname]);
+            if ($question) {
+                $record = $DB->get_record('questionnaire_response_text', ['response_id'=>$qresponse->id,'question_id'=>$question->id]);
+                if (!$record) {
+                    $record = new stdClass();
+                    $record->response_id = $qresponse->id;
+                    $record->question_id = $question->id;
+                    $record->response = $value;
+                    $DB->insert_record('questionnaire_response_text', $record);
+                } else {
+                    $record->response = $value;
+                    $DB->update_record('questionnaire_response_text', $record);
+                }
+                $output->status = 'ok';
+            } else {
+                $output->status = 'not found';
+            }
+        }
+        return ['output'=>json_encode($output)];
+    }
+
+
+
+
+    /* --------- LOOK UP RESPONSE VALUE ----------- */
+
+    // output of routine is aleady an ajax string; so return as param_raw
+    public static function lookup_questionnaire_response_data_returns() {
+        return new \external_single_structure(
+            [
+                'output' => new \external_value(PARAM_RAW, 'json object', true, false, true),
+            ]
+        );
+    }
+    public static function lookup_questionnaire_response_data_parameters() {
+        return new \external_function_parameters(
+            [
+                'cmid' => new \external_value(PARAM_INT, 'Course module id'),
+                'responseid' => new \external_value(PARAM_INT, 'Questionnaire response id'),
+                'fieldname' => new \external_value(PARAM_ALPHA, 'Field name to lookup')
+            ]
+        );
+    }
+
+    public static function lookup_questionnaire_response_data($cmid, $responseid, $fieldname) {
+    global $DB, $USER;
+        $output = new \stdClass();
+
+        $context = \context_module::instance($cmid);
+        self::validate_context($context);
+        require_capability('mod/questionnaire:submit', $context);
+
+        $qresponse = $DB->get_record('questionnaire_response',['id'=>$responseid,'userid'=>$USER->id], '*', MUST_EXIST); // if not the request isn't valid
+        if ($question = $DB->get_record('questionnaire_question', ['name'=>$fieldname],'id,type_id',MUST_EXIST)) { // if not found then request isn't valid
+            switch (intval($question->type_id)) {
+                case 1: // QUESYESNO
+                    if ($rec = $DB->get_record('questionnaire_response_bool',['response_id'=>$qresponse->id,'question_id'=>$question->id])) {
+                        $output->value = $rec->choice_id; 
+                    }
+                break; 
+
+                case 2: // QUESTEXT
+                case 3: // QUESESSAY 
+                case 10: // QUESNUMERIC 
+                    if ($rec = $DB->get_record('questionnaire_response_text',['response_id'=>$qresponse->id,'question_id'=>$question->id])) {
+                        $output->value = $rec->response; 
+                    }
+                break; 
+
+                case 4: // QUESRADIO
+                break; 
+
+                case 5: // QUESCHECK
+                break; 
+
+                case 8: // QUESRATE 
+                    $sql = 'select c.content, r.rankvalue from {questionnaire_response_rank} r inner join {questionnaire_quest_choice} c on r.choice_id = c.id where r.response_id = ? and r.question_id = ?';
+                    if ($rows = $DB->get_records_sql($sql,[$qresponse->id,$question->id])) {
+                        $output = [];
+                        foreach ($rows as $row) {
+                            $row->content = strtolower(trim(strip_tags($row->content)));
+                            $row->rankvalue = intval($row->rankvalue);
+                            $output[] = $row;
+                            // $output[$row->choice_id] = $row->rankvalue;
+                            // $output[] = [$row->choice_id => $row->rankvalue];
+                        }
+                    }
+                break;
+
+                case 9: // QUESDATE 
+                    if ($rec = $DB->get_record('questionnaire_response_date',['response_id'=>$qresponse->id,'question_id'=>$question->id])) {
+                        $output->value = $rec->response; 
+                    }
+                break;
+            }
+        }
+
+        return ['output'=>json_encode($output)];
+    }
+
+
+
+    /* this isn't really realted to questionnaire but was handy for the project that introduced the above two methods */
+    /* --------- LOOK UP RELATED USER COMPLETION ----------- */
+    public static function section_completions_for_course_returns() {
+        return new \external_single_structure(
+            [
+                'output' => new \external_value(PARAM_RAW, 'json object', true, false, true),
+            ]
+        );
+    }
+    public static function section_completions_for_course_parameters() {
+        return new \external_function_parameters(
+            [
+                'courseid' => new \external_value(PARAM_ALPHANUMEXT, 'Related course idnumber to look up')
+            ]
+        );
+    }
+
+    public static function section_completions_for_course($courseid) {
+    global $DB, $USER;
+
+    $output = new \stdClass();
+
+    $theuser = $USER;
+    if ($USER->auth == "anonymous") {
+        // anonymous auth puts a key into the idnumber which MIGHT represent another user who MIGHT exist
+        // if that user does exist, we want to lookup the record for that user instead.
+        if ($possibleuser = $DB->get_record('user',['email'=>$USER->idnumber])) {
+            $theuser = $possibleuser;
+        }
+    }
+
+    // courseid might be int or idnumber
+    if (is_numeric($courseid)) {
+        $course = get_course($courseid);
+    } else {
+        $course = $DB->get_record('course', array('idnumber' => $courseid), '*', MUST_EXIST);
+    }
+    $context = context_course::instance($course->id);
+    $modinfo = get_fast_modinfo($course);
+    $sections = $modinfo->get_section_info_all();
+    $canviewhidden = has_capability('moodle/course:viewhiddensections', $context, $theuser);
+    // $completioninfo = new completion_info($course);
+
+        $section  = 0;
+        $numsections = (int)max(array_keys($sections));
+        while ($section <= $numsections) {
+
+            $thissection = $sections[$section];
+            $showsection = true;
+            if (!$thissection->visible || !$thissection->available) {
+                $showsection = $canviewhidden || !($course->hiddensections == 1);
+            }
+
+            if ($showsection) {
+
+                $sectObj = new stdClass();
+                $sectObj->name = $thissection->name;
+                $sectObj->participated = false;
+
+                if (!empty($modinfo->sections[$section])) {
+                    foreach ($modinfo->sections[$section] as $modnumber) {
+                        $mod = $modinfo->cms[$modnumber];
+
+                        if (!$mod->is_visible_on_course_page()) {
+                            continue; // skip
+                        }
+
+                        $completiondetails = \core_completion\cm_completion_details::get_instance($mod, $theuser->id);
+                        if (!$completiondetails->has_completion()) {
+                            continue; // skip modules without completion or
+                        }
+
+                        if (($completiondetails->get_overall_completion() === COMPLETION_COMPLETE)) {
+                            $sectObj->participated = true;
+                            // could break here
+                        }
+                    }
+                }
+
+                $output->results[] = $sectObj;
+
+            }
+            $section++;
+        }
+        return ['output'=>json_encode($output)];
     }
 }

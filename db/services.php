@@ -43,5 +43,36 @@ $functions = [
         'type' => 'write',
         'capabilities' => 'mod/questionnaire:submit',
         'services' => [MOODLE_OFFICIAL_MOBILE_SERVICE]
+    ],
+    'mod_questionnaire_submit_feedback' => [
+        'classname' => 'mod_questionnaire_external',
+        'methodname' => 'submit_questionnaire_feedback',
+        'classpath' => 'mod/questionnaire/externallib.php',
+        'description' => 'Feedback submit',
+        'type' => 'write',
+        'capabilities' => 'mod/questionnaire:submit',
+        'ajax' => true,
+        'loginrequired' => true
+    ],
+    'mod_questionnaire_lookup_response_data' => [
+       'classname' => 'mod_questionnaire_external',
+        'methodname' => 'lookup_questionnaire_response_data',
+        'classpath' => 'mod/questionnaire/externallib.php',
+        'description' => 'Ajax Lookup for response data',
+        'type' => 'read',
+        'capabilities' => 'mod/questionnaire:submit',
+        'ajax' => true,
+        'loginrequired' => true
+    ],
+    'mod_questionnaire_section_completions_for_course' => [
+       'classname' => 'mod_questionnaire_external',
+        'methodname' => 'section_completions_for_course',
+        'classpath' => 'mod/questionnaire/externallib.php',
+        'description' => 'Ajax Lookup for sections with completions',
+        'type' => 'read',
+        'capabilities' => 'moodle/course:view',
+        'ajax' => true,
+        'loginrequired' => true
     ]
+    
 ];
