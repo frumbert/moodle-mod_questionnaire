@@ -88,9 +88,16 @@ class edit_question_form extends \moodleform {
                     $errors["allchoices"] = get_string('noduplicateschoiceserror', 'questionnaire');
                 }
             }
-            $ndcount = substr_count($data['allnameddegrees'],PHP_EOL);
-            if ($data['precise'] == 4 && $ndcount>0 && $ndcount<$data['length']) {
-                $errors["length"] = get_string('scaleitemslessthannameddegrees', 'questionnaire');
+            $ndcount = substr_count(trim($data['allnameddegrees']),PHP_EOL);
+            if ($data['precise'] == 4) {
+                if ($ndcount>0 && $ndcount+1<$data['length']) {
+                    $errors["length"] = get_string('scaleitemslessthannameddegrees', 'questionnaire');
+                } else if ($ndcount == 0) {
+                    $errors["allnameddegrees"] = get_string('mustusenameddegrees', 'questionnaire');
+                }
+                if (strpos($data['allnameddegrees'], '=')==false) {
+                    $errors["allnameddegrees"] = get_string('nameddegreesnoequals', 'questionnaire');
+                }
             }
         }
 

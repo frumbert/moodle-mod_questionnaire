@@ -334,6 +334,8 @@ $string['noduplicateschoiceserror'] = 'You must enter at least 2 Possible answer
 $string['notenoughscaleitems'] = 'You must enter a minimum value of 2 scale items!';
 $string['scaleitemslessthannameddegrees'] = 'The number of scale items is greater than the number of named degrees';
 $string['noneinuse'] = 'This questionnaire does not contain any questions.';
+$string['mustusenameddegrees'] = 'Named degrees are required for checkbox rating type.';
+$string['nameddegreesnoequals'] = 'Named degrees must be in the format score=label per line, e.g. 1=Low 2=Medium 3=High';
 $string['non_respondents'] = 'Users who have not yet submitted their responses to this questionnaire';
 $string['nopublicsurveys'] = 'No public questionnaires.';
 $string['noresponsedata'] = 'No responses for this question.';
