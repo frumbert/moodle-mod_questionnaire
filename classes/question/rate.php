@@ -357,7 +357,7 @@ class rate extends question {
                     $order = 'table_rate_click(this)'; //reset per row
                 }
                 $cols[] = ['colstyle' => 'text-align: '.$textalign.';',
-                           'coltext' => format_text($content, FORMAT_HTML, ['noclean' => true]).'&nbsp;'];
+                           'coltext' => trim(format_text($content, FORMAT_HTML, ['noclean' => true]))]; // WHY THE .'&nbsp;'];
 
                 $bg = 'c0 raterow';
                 if (($nbchoices > 1) && !$this->no_duplicate_choices() && !$blankquestionnaire) {
