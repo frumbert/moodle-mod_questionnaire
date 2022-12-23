@@ -3410,7 +3410,7 @@ class questionnaire {
                         }
                         break;
 
-                    case QUESRATE: // Rate.
+                    case QUESRATE: // Rate. O. M. G. Isn't this effectivly duplicating \mod_questionnaire\question\rate\get_results() et al ???
                         foreach ($choices as $choice) {
                             $nameddegrees = 0;
                             $modality = '';
