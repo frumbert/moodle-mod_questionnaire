@@ -3048,7 +3048,7 @@ class questionnaire {
         } else {
             $userfieldsarr = get_all_user_name_fields();
         }
-        $userfieldsarr = array_merge($userfieldsarr, ['username', 'department', 'institution']);
+        $userfieldsarr = array_merge($userfieldsarr, ['username', 'department', 'institution', 'idnumber']);
         return $userfieldsarr;
     }
 
@@ -3230,6 +3230,9 @@ class questionnaire {
         }
         if (in_array('username', $options)) {
             array_push($positioned, $username);
+        }
+        if (in_array('idnumber', $options)) {
+            array_push($positioned, $user->idnumber);
         }
         if (in_array('complete', $options)) {
             array_push($positioned, $resprow->complete);
@@ -3425,19 +3428,7 @@ class questionnaire {
                             if (preg_match("/^[0-9]{1,3}=/", $content, $ndd)) {
                                 $nameddegrees++;
                             } else {
-                                if ($osgood) {
-                                    list($contentleft, $contentright) = array_merge(preg_split('/[|]/', $content), array(' '));
-                                    $contents = questionnaire_choice_values($contentleft);
-                                    if ($contents->title) {
-                                        $contentleft = $contents->title;
-                                    }
-                                    $contents = questionnaire_choice_values($contentright);
-                                    if ($contents->title) {
-                                        $contentright = $contents->title;
-                                    }
-                                    $modality = strip_tags($contentleft.'|'.$contentright);
-                                    $modality = preg_replace("/[\r\n\t]/", ' ', $modality);
-                                } else {
+                                if ($table) {
                                     $contents = questionnaire_choice_values($content);
                                     if ($contents->modname) {
                                         $modality = $contents->modname;
@@ -3447,11 +3438,43 @@ class questionnaire {
                                         $modality = strip_tags($contents->text);
                                         $modality = preg_replace("/[\r\n\t]/", ' ', $modality);
                                     }
+                                    $col = $choice->name.'->'.$modality;
+                                    foreach ($question->nameddegrees as $dv => $dt) {
+                                        if ($choicecodes == "1") $dt = $dv.':'.$dt;
+                                        $columns[][$qpos] = $col.'->'.$dt;
+                                        $questionidcols[][$qpos] = $qid.'_'.$choice->cid.'_'.$dv;
+                                    }
+                                    array_push($types, $idtocsvmap[$type]); // what does this even do?
+
+                                } else {
+                                    if ($osgood) {
+                                        list($contentleft, $contentright) = array_merge(preg_split('/[|]/', $content), array(' '));
+                                        $contents = questionnaire_choice_values($contentleft);
+                                        if ($contents->title) {
+                                            $contentleft = $contents->title;
+                                        }
+                                        $contents = questionnaire_choice_values($contentright);
+                                        if ($contents->title) {
+                                            $contentright = $contents->title;
+                                        }
+                                        $modality = strip_tags($contentleft.'|'.$contentright);
+                                        $modality = preg_replace("/[\r\n\t]/", ' ', $modality);
+                                    } else {
+                                        $contents = questionnaire_choice_values($content);
+                                        if ($contents->modname) {
+                                            $modality = $contents->modname;
+                                        } else if ($contents->title) {
+                                            $modality = $contents->title;
+                                        } else {
+                                            $modality = strip_tags($contents->text);
+                                            $modality = preg_replace("/[\r\n\t]/", ' ', $modality);
+                                        }
+                                    }
+                                    $col = $choice->name.'->'.$modality;
+                                    $columns[][$qpos] = $col;
+                                    $questionidcols[][$qpos] = $qid.'_'.$choice->cid;
+                                    array_push($types, $idtocsvmap[$type]);
                                 }
-                                $col = $choice->name.'->'.$modality;
-                                $columns[][$qpos] = $col;
-                                $questionidcols[][$qpos] = $qid.'_'.$choice->cid;
-                                array_push($types, $idtocsvmap[$type]);
                             }
                         }
                         break;
@@ -3533,7 +3556,7 @@ class questionnaire {
             $question = $this->questions[$qid];
             $qtype = intval($question->type_id);
             if ($rankaverages) {
-                if ($qtype === QUESRATE) {
+                if ($qtype === QUESRATE && $question->precise != "4") { // rate averages only if not rate_table
                     if (empty($averages[$qid])) {
                         $results = $this->questions[$qid]->responsetype->get_results($rids);
                         foreach ($results as $qresult) {
@@ -3550,7 +3573,20 @@ class questionnaire {
                 $row = [];
             }
 
-            if ($qtype === QUESRATE || $qtype === QUESCHECK) {
+            if ($qtype === QUESRATE && $questionobj->precise == "4") { // rate table
+                foreach ($questionobj->nameddegrees as $dv => $dt) {
+                    $key = $qid.'_'.$responserow->choice_id.'_'.$dv;
+                    $position = $questionpositions[$key]; // where to put the result
+                    $rankvalue = intval($responserow->rankvalue);
+                    if (2**$dv & $rankvalue) {
+                        $choicetxt = '1';
+                    } else {
+                        $choicetxt = '0';
+                    }
+                    $row[$position] = $choicetxt;
+                }
+
+            } else if ($qtype === QUESRATE || $qtype === QUESCHECK) {
                 $key = $qid.'_'.$responserow->choice_id;
                 $position = $questionpositions[$key];
                 if ($qtype === QUESRATE) {
