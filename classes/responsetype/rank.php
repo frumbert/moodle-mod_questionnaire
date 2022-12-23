@@ -178,12 +178,14 @@ class rank extends responsetype {
             $output = [];
             foreach ($results as &$result) {
                 if (empty($output[$result->content])) $output[$result->content] = array_fill_keys($rankvalue, 0);
-                foreach ($rankvalue as $rank => $ignore) { // we only care about the key
-                    $intrankvalue = intval($result->rankvalue);
-                    if ($intrankvalue === -1) {
-                        $output[$result->content][-1] += 1;
-                    } else if ((2**$rank) & $intrankvalue) {
-                        $output[$result->content][$rank] += 1;
+                $intrankvalue = intval($result->rankvalue);
+                if ($intrankvalue === -1) { // n/a is mutually exclusive to other ratings
+                    $output[$result->content][-1] += 1;
+                } else { // loop to figure out selected options
+                    foreach ($rankvalue as $rank => $ignore) { // we only care about the key
+                        if ((2**$rank) & $intrankvalue) { // power-of-two of the named value
+                            $output[$result->content][$rank] += 1;
+                        }
                     }
                 }
             }
