@@ -691,11 +691,11 @@ class rate extends question {
         }
 
         if ($num == 0) {
-            if (!$this->has_dependencies()) {
+           // if (!$this->has_dependencies()) { // rate doesn't have depenencies
                 if ($this->required()) {
                     $answered = false;
                 }
-            }
+            //}
         }
         return $answered;
     }
