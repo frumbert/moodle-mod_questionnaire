@@ -3152,9 +3152,10 @@ class questionnaire {
         if (!$this->survey_is_public()) {
             $courseid = $this->course->id;
             $coursename = $this->course->fullname;
+            $categoryname = core_course_category::get($this->course->category)->name;
         } else {
             // For a public questionnaire, look for the course that used it.
-            $sql = 'SELECT q.id, q.course, c.fullname ' .
+            $sql = 'SELECT q.id, q.course, c.fullname, c.category ' .
                    'FROM {questionnaire_response} qr ' .
                    'INNER JOIN {questionnaire} q ON qr.questionnaireid = q.id ' .
                    'INNER JOIN {course} c ON q.course = c.id ' .
@@ -3162,9 +3163,11 @@ class questionnaire {
             if ($record = $DB->get_record_sql($sql, [$resprow->rid, 'y'])) {
                 $courseid = $record->course;
                 $coursename = $record->fullname;
+                $categoryname = core_course_category::get($record->category)->name;
             } else {
                 $courseid = $this->course->id;
                 $coursename = $this->course->fullname;
+                $categoryname = core_course_category::get($this->course->category)->name;
             }
         }
 
@@ -3218,6 +3221,9 @@ class questionnaire {
         }
         if (in_array('course', $options)) {
             array_push($positioned, $coursename);
+        }
+        if (in_array('category', $options)) {
+            array_push($positioned, $categoryname);
         }
         if (in_array('group', $options)) {
             array_push($positioned, $groupname);
@@ -3287,6 +3293,9 @@ class questionnaire {
             if (in_array($option, array('response', 'submitted', 'id'))) {
                 $columns[] = get_string($option, 'questionnaire');
                 $types[] = 0;
+            } else if (in_array($option, array('course', 'category'))) {
+                $columns[] = get_string($option, 'questionnaire');
+                $types[] = 1;
             } else {
                 $columns[] = get_string($option);
                 $types[] = 1;
@@ -3396,6 +3405,10 @@ class questionnaire {
                                 $modality = $contents->title;
                             } else {
                                 $modality = strip_tags($contents->text);
+                                if (strpos($modality,'!other')!==false) {
+                                    // $modality = str_replace('!other=',$stringother,$modality);
+                                    $modality = $stringother;
+                                }
                             }
                             $col = $choice->name.'->'.$modality;
                             $columns[][$qpos] = $col;
@@ -3404,8 +3417,12 @@ class questionnaire {
                             // If "Other" add a column for the "other" checkbox.
                             // Then add a column for the actual "other" text entered.
                             if (\mod_questionnaire\question\choice::content_is_other_choice($content)) {
-                                $content = $stringother;
-                                $col = $choice->name.'->['.$content.']';
+                                if (strpos($content,'=')!==false) {
+                                    $content = $stringother . '[' . substr($content, strpos($content,'=')+1) . ']';
+                                } else {
+                                    $content = '[' . $stringother . ']';
+                                }
+                                $col = $choice->name.'->'.$content;
                                 $columns[][$qpos] = $col;
                                 $questionidcols[][$qpos] = null;
                                 array_push($types, '0');
