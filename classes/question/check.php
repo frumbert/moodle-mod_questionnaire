@@ -153,6 +153,7 @@ class check extends question {
         if ($otherempty) {
             $this->add_notification(get_string('otherempty', 'questionnaire'));
         }
+        // shuffle ($choicetags->qelements);
         return $choicetags;
     }
 
@@ -206,6 +207,7 @@ class check extends question {
     public function response_valid($responsedata) {
         $nbrespchoices = 0;
         $valid = true;
+        $resp_q = $responsedata->{'q'.$this->id};
         if (is_a($responsedata, 'mod_questionnaire\responsetype\response\response')) {
             // If $responsedata is a response object, look through the answers.
             if (isset($responsedata->answers[$this->id]) && !empty($responsedata->answers[$this->id])) {
@@ -217,8 +219,25 @@ class check extends question {
                     }
                 }
             }
-        } else if (isset($responsedata->{'q'.$this->id})) {
-            foreach ($responsedata->{'q'.$this->id} as $answer) {
+        } else if (isset($resp_q)) {
+            foreach ($resp_q as $key => $answer) {
+                if (strpos($key, 'o') === 0) { // is an 'other' input
+                    $associated_key = substr($key, 1);
+                    if (array_key_exists($associated_key, $resp_q)) {
+                        if (empty(trim($answer))) {
+                            $valid = false;
+                            break;
+                        } else {
+                        // else wasn't empty so count the choice
+                            $nbrespchoices++;
+                        }
+                    }
+                /*
+                OLD CODE:
+"when other is ticked but no value is sent"
+...but there is no point where the text 'other_' is set - maybe that is legacy?
+the answer will be the value of the input box or empty
+alt: if it has a value in iteration 1 and empty in iteration 2 then it is not valid
                 if (strpos($answer, 'other_') !== false) {
                     // ..."other" choice is checked but text box is empty.
                     $othercontent = "q".$this->id.substr($answer, 5);
@@ -226,29 +245,48 @@ class check extends question {
                         $valid = false;
                         break;
                     }
-                    $nbrespchoices++;
-                } else if (is_numeric($answer)) {
-                    $nbrespchoices++;
+                */
+                    
+                } else if (is_numeric($key)) {
+                    if (!array_key_exists("o{$key}", $resp_q)) { // skip double-counting !other
+                        $nbrespchoices++;
+                    }
                 }
             }
         } else {
             return parent::response_valid($responsedata);
         }
 
-        $nbquestchoices = count($this->choices);
-        $min = $this->length;
-        $max = $this->precise;
-        if ($max == 0) {
-            $max = $nbquestchoices;
-        }
-        if ($min > $max) {
-            $min = $max;     // Sanity check.
-        }
-        $min = min($nbquestchoices, $min);
-        if ($nbrespchoices && (($nbrespchoices < $min) || ($nbrespchoices > $max))) {
-            // Number of ticked boxes is not within min and max set limits.
+        // min must be zer or more
+        // max can't exceed the number of choices
+        $min = intval($this->length);
+        $max = intval($this->precise);
+        if ($min > 0 && $nbrespchoices < $min) {
             $valid = false;
         }
+        if ($max > 0 && $nbrespchoices > $max) {
+            $valid = false;
+        }
+
+        // // number of checked choices is between
+        // if (max($min, min($max, $nbrespchoices)) <= count($this->choices)) {
+        
+        // }
+
+        // if ($max == 0) {
+        //     $max = $nbquestchoices;
+        // }
+        // if ($min > $max) {
+        //     $min = $max;     // Sanity check.
+        // }
+        // $min = min($nbquestchoices, $min);
+        // if ($nbrespchoices && (($nbrespchoices < $min) || ($nbrespchoices > $max))) {
+        //     // Number of ticked boxes is not within min and max set limits.
+        //     $valid = false;
+        // } else if ($nbrespchoices === 0 && $min > 0) {
+        //     // Number of ticked boxes is zero but at least one is required
+        //     $valid = false;
+        // }
 
         return $valid;
     }
