@@ -145,6 +145,7 @@ function other_check_empty(name, value) {
     var f = document.getElementById("phpesp_response");
     var i;
     for (i = 0; i < f.elements.length; i++) {
+// console.log(f.elements[i].name, f.elements[i].value);
         if ((f.elements[i].name == name) && f.elements[i].value.substr(0, 6) == "other_") {
             f.elements[i].checked = true;
             var otherid = f.elements[i].name + "_" + f.elements[i].value.substring(6);
@@ -213,12 +214,12 @@ function table_rate_click(el) {
     first.indeterminate = false; // we don't know yet
     if (el === last) { // n/a unchecks others
         for (const node of cb) if (node!==last) node.checked = false;
-        hidden.value = last.value; console.info('n/a set value', last.value);
+        hidden.value = last.value; // console.info('n/a set value', last.value);
         return;
     } else if (el === first) { // setting initial unchecks others
         first.indeterminate = true;
         for (const node of cb) if (node!==first) node.checked = false;
-        hidden.value = first.value; console.info('first set value', first.value);
+        hidden.value = first.value; // console.info('first set value', first.value);
         return;
     } else { // toggle updates bitmask
         let sum = 0;
@@ -226,7 +227,7 @@ function table_rate_click(el) {
             if (node===first||node===last) { node.checked = false; continue; }
             sum += node.checked ? Math.pow(2, parseInt(node.value,10)) : 0;
         }
-        hidden.value = sum;  console.info('sum set value', sum);
+        hidden.value = sum;  // console.info('sum set value', sum);
     }
 }
 
@@ -235,6 +236,7 @@ function table_rate_click(el) {
 function checkbox_empty(name) {
     var actualbuttons = document.getElementsByName(name);
     for (var i = 0; i <= actualbuttons.length; i++) {
+    //console.log('checkbox_empty', name, actualbuttons[i]);
         if (actualbuttons[i].value.substr(0, 6) == "other_") {
             name = name.substring(0, name.length - 2) + actualbuttons[i].value.substring(5);
             var othertext = document.getElementsByName(name);
