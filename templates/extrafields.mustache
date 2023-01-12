@@ -21,9 +21,13 @@
 
     Example context (json):
     {
+    "choicecodes": true,
+    "choicetext": true,
+    "complete": false,
+    "rankaverages": false
     }
     }}
-<input type="checkbox" name="choicecodes" id="choicecodes" checked="checked" value="1" /> <label for="choicecodes">{{#str}}includechoicecodes, questionnaire{{/str}}</label><br />
-<input type="checkbox" name="choicetext" id="choicetext" checked="checked" value="1" /> <label for="choicetext">{{#str}}includechoicetext, questionnaire{{/str}}</label><br />
-<input type="checkbox" name="complete" id="complete" value="1" /> <label for="complete">{{#str}}includeincomplete, questionnaire{{/str}}</label><br />
-<input type="checkbox" name="rankaverages" id="rankaverages" value="1" /> <label for="rankaverages">{{#str}}includerankaverages, questionnaire{{/str}}</label><br />
+<input type="checkbox" name="choicecodes" id="choicecodes"{{#choicecodes}} checked="checked"{{/choicecodes}} value="1" /> <label for="choicecodes">{{#str}}includechoicecodes, questionnaire{{/str}}</label><br />
+<input type="checkbox" name="choicetext" id="choicetext"{{#choicetext}} checked="checked"{{/choicetext}} value="1" /> <label for="choicetext">{{#str}}includechoicetext, questionnaire{{/str}}</label><br />
+<input type="checkbox" name="complete" id="complete"{{#complete}} checked="checked"{{/complete}} value="1" /> <label for="complete">{{#str}}includeincomplete, questionnaire{{/str}}</label><br />
+<input type="checkbox" name="rankaverages" id="rankaverages"{{#rankaverages}} checked="checked"{{/rankaverages}} value="1" /> <label for="rankaverages">{{#str}}includerankaverages, questionnaire{{/str}}</label><br />

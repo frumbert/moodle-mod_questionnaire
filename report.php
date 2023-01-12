@@ -461,7 +461,12 @@ switch ($action) {
             'action' => 'dfs',
             'group' => $currentgroupid
         ];
-        $extrafields = $questionnaire->renderer->render_from_template('mod_questionnaire/extrafields', []);
+        $extrafields = $questionnaire->renderer->render_from_template('mod_questionnaire/extrafields', [
+            "choicecodes" => true,
+            "choicetext" => false,
+            "complete" => false,
+            "rankaverages" => false,
+        ]);
         $output .= $questionnaire->renderer->download_dataformat_selector(get_string('downloadtypes', 'questionnaire'),
             'report.php', 'downloadformat', $downloadparams, $extrafields);
         $output .= $questionnaire->renderer->box_end();
