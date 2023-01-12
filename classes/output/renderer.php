@@ -529,16 +529,18 @@ class renderer extends \plugin_renderer_base {
      * @param string $extrafields HTML for extra form fields
      * @return string HTML fragment
      */
-    public function download_dataformat_selector($label, $base, $name = 'dataformat', $params = array(), $extrafields = '') {
+    public function download_dataformat_selector($label, $base, $name = 'dataformat', $params = array(), $extrafields = '', $default = 'excel') {
 
         $formats = \core_plugin_manager::instance()->get_plugins_of_type('dataformat');
         $options = array();
         foreach ($formats as $format) {
             if ($format->is_enabled()) {
-                $options[] = array(
+                $ar = array(
                     'value' => $format->name,
                     'label' => get_string('dataformat', $format->component),
                 );
+                if ($format->name === $default) $ar['selected'] = true;
+                $options[] = $ar;
             }
         }
         $hiddenparams = array();

@@ -61,7 +61,7 @@
         <div><label for="downloadtype_{{name}}">{{label}}</label>
         <select name="{{name}}" id="downloadtype_{{name}}">
         {{#options}}
-            <option value="{{value}}">{{label}}</option>
+            <option value="{{value}}"{{#selected}} selected{{/selected}}>{{label}}</option>
         {{/options}}
         </select>
         <input type="submit" value="{{submit}}" class="btn btn-primary"></div><br />
