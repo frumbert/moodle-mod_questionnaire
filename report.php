@@ -488,7 +488,7 @@ switch ($action) {
         require_once($CFG->dirroot . '/lib/dataformatlib.php');
         // Use the questionnaire name as the file name. Clean it and change any non-filename characters to '_'.
         $name = clean_param($questionnaire->name, PARAM_FILE);
-        $name .= '_' . userdate(time());
+        $name .= '_' . userdate(time(), '%Y%m%d%H%M');
         $name = preg_replace("/[^A-Z0-9]+/i", "_", trim($name));
 
         $choicecodes = optional_param('choicecodes', '0', PARAM_INT);
