@@ -37,6 +37,7 @@ if ($ADMIN->fulltree) {
     $choices = array(
         'response' => get_string('response', 'questionnaire'),
         'submitted' => get_string('submitted', 'questionnaire'),
+        'duration' => get_string('duration', 'questionnaire'),
         'institution' => get_string('institution'),
         'department' => get_string('department'),
         'course' => get_string('course', 'questionnaire'),

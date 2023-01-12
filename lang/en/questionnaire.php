@@ -685,3 +685,4 @@ $string['skipsubmissionpage_help'] = 'Automatically commit then bypass the submi
 
 $string['course'] = 'Course';
 $string['category'] = 'Category';
+$string['duration'] = 'Duration';
