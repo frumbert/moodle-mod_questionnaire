@@ -3213,6 +3213,10 @@ class questionnaire {
             $submitted = date(get_string('strfdateformatcsv', 'questionnaire'), $resprow->submitted);
             array_push($positioned, $submitted);
         }
+        if (in_array('duration', $options)) {
+            $duration = $this->get_survey_duration($resprow);
+            array_push($positioned, $duration);
+        }
         if (in_array('institution', $options)) {
             array_push($positioned, $user->institution);
         }
@@ -3262,6 +3266,30 @@ class questionnaire {
         return $positioned;
     }
 
+    // given a response, find out how long the user took
+    // by comparing the submitted timestamp to when the coursemodule was
+    // last opened
+    protected function get_survey_duration($responserow) {
+    global $DB;
+        $seconds = 0;
+        $sql = "SELECT timecreated from {logstore_standard_log}
+                WHERE eventname = ?
+                AND userid = ?
+                AND objectid = ?
+                AND timecreated < ?
+                ORDER BY timecreated DESC
+        ";
+        if ($row = $DB->get_records_sql($sql, [
+            '\mod_questionnaire\event\course_module_viewed',
+            $responserow->userid,
+            $this->id,
+            $responserow->submitted
+        ], 0, 1)) {
+            $seconds = intval($responserow->submitted) - intval(reset($row)->timecreated);
+        }
+        return sprintf('%02d:%02d:%02d', ($seconds/ 3600),($seconds/ 60 % 60), $seconds% 60);
+    }
+
     /**
      * Exports the results of a survey to an array.
      * @param int $currentgroupid
@@ -3293,7 +3321,7 @@ class questionnaire {
             if (in_array($option, array('response', 'submitted', 'id'))) {
                 $columns[] = get_string($option, 'questionnaire');
                 $types[] = 0;
-            } else if (in_array($option, array('course', 'category'))) {
+            } else if (in_array($option, array('course', 'category','duration'))) {
                 $columns[] = get_string($option, 'questionnaire');
                 $types[] = 1;
             } else {
