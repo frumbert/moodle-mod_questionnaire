@@ -464,7 +464,7 @@ switch ($action) {
         $extrafields = $questionnaire->renderer->render_from_template('mod_questionnaire/extrafields', [
             "choicecodes" => true,
             "choicetext" => false,
-            "complete" => false,
+            "complete" => true,
             "rankaverages" => false,
         ]);
         $output .= $questionnaire->renderer->download_dataformat_selector(get_string('downloadtypes', 'questionnaire'),
