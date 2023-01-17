@@ -210,7 +210,8 @@ class mod_questionnaire_external extends \external_api {
         require_capability('mod/questionnaire:submit', $context);
 
         $qresponse = $DB->get_record('questionnaire_response',['id'=>$responseid,'userid'=>$USER->id], '*', MUST_EXIST); // if not the request isn't valid
-        if ($question = $DB->get_record('questionnaire_question', ['name'=>$fieldname],'id,type_id',MUST_EXIST)) { // if not found then request isn't valid
+        $questionnaire = $DB->get_record('questionnaire', ['id'=>$qresponse->questionnaireid]);
+        if ($question = $DB->get_record('questionnaire_question', ['name'=>$fieldname, 'surveyid'=>$questionnaire->sid],'id,type_id',MUST_EXIST)) { // if not found then request isn't valid
             switch (intval($question->type_id)) {
                 case 1: // QUESYESNO
                     if ($rec = $DB->get_record('questionnaire_response_bool',['response_id'=>$qresponse->id,'question_id'=>$question->id])) {
