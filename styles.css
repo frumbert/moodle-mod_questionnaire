@@ -143,7 +143,7 @@ td.selected {
 
 #page-mod-questionnaire-complete td.notcompleted,
 #page-mod-questionnaire-preview td.notcompleted {
-    border: 2px solid red;
+    border-right: 2px solid red;
     background-color: #fafafa;
 }
 

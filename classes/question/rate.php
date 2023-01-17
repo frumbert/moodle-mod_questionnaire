@@ -360,11 +360,12 @@ class rate extends question {
                            'coltext' => trim(format_text($content, FORMAT_HTML, ['noclean' => true]))]; // WHY THE .'&nbsp;'];
 
                 $bg = 'c0 raterow';
+                $completeclass = '';
                 if (($nbchoices > 1) && !$this->no_duplicate_choices() && !$blankquestionnaire) {
                     $checked = ' checked="checked"';
                     $completeclass = 'notanswered';
                     $title = '';
-                    $is_unset = isset($response->answers[$this->id][$cid]) && ($response->answers[$this->id][$cid]->value == -999);
+                    $is_unset = (isset($response->answers[$this->id][$cid]) && ($response->answers[$this->id][$cid]->value == -999)) || $response->answers[$this->id][$cid]->value == null;
                     if ($notcomplete && $is_unset) {
                         $completeclass = 'notcompleted';
                         $title = get_string('pleasecomplete', 'questionnaire');
