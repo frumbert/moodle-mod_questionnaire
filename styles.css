@@ -175,6 +175,15 @@ td.selected {
     display: inline;
 }
 
+#page-mod-questionnaire-questions #id_manageq .has-js {
+    width:10px;
+    height:10px;
+    border-radius:5px;
+    text-indent: -99999px;
+    font-size:0;
+    background-color: indigo;
+}
+
 .floatprinticon {
     margin-top: -30px;
     float: right;

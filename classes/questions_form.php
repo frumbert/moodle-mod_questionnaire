@@ -319,6 +319,11 @@ class questions_form extends \moodleform {
                     $moveqgroup[] =& $mform->createElement('static', 'qnums', '', '');
                 }
             }
+
+            if (!empty($question->javascript)) {
+                $manageqgroup[] =& $mform->createElement('static', 'qjs_'.$question->id, '', '<span class="has-js" title="'.get_string('javascript','questionnaire').'"></span>');
+            }
+
             if ($question->name) {
                 $qname = '('.$question->name.')';
             } else {
