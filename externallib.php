@@ -286,7 +286,13 @@ class mod_questionnaire_external extends \external_api {
     if ($USER->auth == "anonymous") {
         // anonymous auth puts a key into the idnumber which MIGHT represent another user who MIGHT exist
         // if that user does exist, we want to lookup the record for that user instead.
-        if ($possibleuser = $DB->get_record('user',['email'=>$USER->idnumber])) {
+
+        // MemberID
+        if ($match = $DB->get_record('user_preferences', ['name'=>'memberid','value'=>$USER->idnumber])) {
+            $theuser = $DB->get_record('user',['id'=>$match->userid]);
+
+        // Email
+        } else if ($possibleuser = $DB->get_record('user',['email'=>$USER->idnumber])) {
             $theuser = $possibleuser;
         }
     }
