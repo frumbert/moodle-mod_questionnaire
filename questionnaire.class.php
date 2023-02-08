@@ -3303,7 +3303,7 @@ class questionnaire {
      */
     public function generate_csv($currentgroupid, $rid='', $userid='', $choicecodes=1, $choicetext=0, $showincompletes=0,
                                  $rankaverages=0) {
-        global $DB;
+        global $DB, $COURSE;
 
         raise_memory_limit('1G');
 
@@ -3315,6 +3315,7 @@ class questionnaire {
         if ($showincompletes == 1) {
             $options[] = 'complete';
         }
+
         $columns = array();
         $types = array();
         foreach ($options as $option) {
@@ -3323,6 +3324,9 @@ class questionnaire {
                 $types[] = 0;
             } else if (in_array($option, array('course', 'category','duration'))) {
                 $columns[] = get_string($option, 'questionnaire');
+                $types[] = 1;
+            } else if ($option == 'idnumber') {
+                $columns[] = get_string('idnumber', 'questionnaire');
                 $types[] = 1;
             } else {
                 $columns[] = get_string($option);
@@ -3416,7 +3420,7 @@ class questionnaire {
                                 $col = $choice->name.'_'.$stringother;
                                 $columns[][$qpos] = $col;
                                 $questionidcols[][$qpos] = null;
-                                array_push($types, '0');
+                                array_push($types, '0'); // $types is never used
                             }
                         }
                         break;
@@ -3441,7 +3445,7 @@ class questionnaire {
                             $col = $choice->name.'->'.$modality;
                             $columns[][$qpos] = $col;
                             $questionidcols[][$qpos] = $qid.'_'.$choice->cid;
-                            array_push($types, '0');
+                            array_push($types, '0'); // $types is never used
                             // If "Other" add a column for the "other" checkbox.
                             // Then add a column for the actual "other" text entered.
                             if (\mod_questionnaire\question\choice::content_is_other_choice($content)) {
@@ -3453,7 +3457,7 @@ class questionnaire {
                                 $col = $choice->name.'->'.$content;
                                 $columns[][$qpos] = $col;
                                 $questionidcols[][$qpos] = null;
-                                array_push($types, '0');
+                                array_push($types, '0'); // $types is never used
                             }
                         }
                         break;
@@ -3484,6 +3488,7 @@ class questionnaire {
                                         $modality = preg_replace("/[\r\n\t]/", ' ', $modality);
                                     }
                                     $col = $choice->name.'->'.$modality;
+                                    $question->nameddegrees[-1] = get_string('notapplicable','questionnaire');
                                     foreach ($question->nameddegrees as $dv => $dt) {
                                         if ($choicecodes == "1") $dt = $dv.':'.$dt;
                                         $columns[][$qpos] = $col.'->'.$dt;
@@ -3518,7 +3523,7 @@ class questionnaire {
                                     $col = $choice->name.'->'.$modality;
                                     $columns[][$qpos] = $col;
                                     $questionidcols[][$qpos] = $qid.'_'.$choice->cid;
-                                    array_push($types, $idtocsvmap[$type]);
+                                    array_push($types, $idtocsvmap[$type]); // $types is never used
                                 }
                             }
                         }
@@ -3527,7 +3532,7 @@ class questionnaire {
             } else {
                 $columns[][$qpos] = $col;
                 $questionidcols[][$qpos] = $qid;
-                array_push($types, $idtocsvmap[$type]);
+                array_push($types, $idtocsvmap[$type]); // $types is never used
             }
             $num++;
         }
@@ -3623,10 +3628,14 @@ class questionnaire {
                     $key = $qid.'_'.$responserow->choice_id.'_'.$dv;
                     $position = $questionpositions[$key]; // where to put the result
                     $rankvalue = intval($responserow->rankvalue);
-                    if (2**$dv & $rankvalue) {
-                        $choicetxt = '1';
+                    if ($dv === -1) { // n/a column
+                        $choicetxt = ($rankvalue === -1) ? '1' : '0';
                     } else {
-                        $choicetxt = '0';
+                        if ($rankvalue > -1 && (2**$dv & $rankvalue)) { // 2**-1 = 0.5; 0.5 & -1 = 0; shouldn't have to do this.
+                            $choicetxt = '1';
+                        } else {
+                            $choicetxt = '0';
+                        }
                     }
                     $row[$position] = $choicetxt;
                 }
@@ -3635,10 +3644,25 @@ class questionnaire {
                 $key = $qid.'_'.$responserow->choice_id;
                 $position = $questionpositions[$key];
                 if ($qtype === QUESRATE) {
-                    $choicetxt = $responserow->rankvalue;
+                    $content = json_decode($questionsbyposition[$position]->extradata)[$responserow->rankvalue];
+                    list($contentvalue,$contentlabel) = preg_split('/(=|::)/', $content, 2); // supports Red or 1=Red or rouge::Red formats
+                    if (is_null($contentlabel)) { // content was only a label
+                        $contentlabel = $contentvalue;
+                        $contentvalue = $responserow->rankvalue;
+                    }
+                    if ($choicecodes == 1 && $choicetext == 1) {
+                        $choicetxt = $contentvalue . ' : ' . $contentlabel;
+                    } else if ($choicecodes == 1) {
+                        $choicetxt = $contentvalue;
+                    } else if ($choicetext == 1) {
+                        $choicetxt = $contentlabel;
+                    } else {
+                        $choicetxt = $responserow->rankvalue;
+                    }
                     if ($rankaverages) {
                         $averagerow[$position] = $averages[$qid][$responserow->choice_id];
                     }
+                    if ($choicetxt == '-999') $choicetxt = '';
                 } else {
                     $content = $choicesbyqid[$qid][$responserow->choice_id]->content;
                     if (\mod_questionnaire\question\choice::content_is_other_choice($content)) {
@@ -3668,18 +3692,22 @@ class questionnaire {
                             }
                         }
                     }
-
                     $content = $choicesbyqid[$qid][$responserow->choice_id]->content;
+                    list($contentvalue,$contentlabel) = preg_split('/(=|::)/', $content, 2); // supports Red or 1=Red or rouge::Red formats
+                    if (is_null($contentlabel)) { // content was only a label
+                        $contentlabel = $contentvalue;
+                        $contentvalue = $c;
+                    }
                     if (\mod_questionnaire\question\choice::content_is_other_choice($content)) {
                         // If this has an "other" text, use it.
                         $responsetxt = \mod_questionnaire\question\choice::content_other_choice_display($content);
                         $responsetxt1 = $responserow->response;
                     } else if (($choicecodes == 1) && ($choicetext == 1)) {
-                        $responsetxt = $c.' : '.$content;
+                        $responsetxt = $contentvalue.' : '.$contentlabel;
                     } else if ($choicecodes == 1) {
-                        $responsetxt = $c;
+                        $responsetxt = $contentvalue;
                     } else {
-                        $responsetxt = $content;
+                        $responsetxt = $contentlabel;
                     }
                 } else if (intval($qtype) === QUESYESNO) {
                     // At this point, the boolean responses are returned as characters in the "response"
