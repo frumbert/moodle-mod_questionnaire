@@ -3644,7 +3644,7 @@ class questionnaire {
                 $key = $qid.'_'.$responserow->choice_id;
                 $position = $questionpositions[$key];
                 if ($qtype === QUESRATE) {
-                    $content = json_decode($questionsbyposition[$position]->extradata)[$responserow->rankvalue];
+                    $content = json_decode($questionsbyposition[$position]->extradata)[$responserow->rankvalue]; // what is the correct method for this?
                     list($contentvalue,$contentlabel) = preg_split('/(=|::)/', $content, 2); // supports Red or 1=Red or rouge::Red formats
                     if (is_null($contentlabel)) { // content was only a label
                         $contentlabel = $contentvalue;
