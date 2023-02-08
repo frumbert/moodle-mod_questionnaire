@@ -3644,8 +3644,11 @@ class questionnaire {
                 $key = $qid.'_'.$responserow->choice_id;
                 $position = $questionpositions[$key];
                 if ($qtype === QUESRATE) {
-                    $content = json_decode($questionsbyposition[$position]->extradata)[$responserow->rankvalue]; // what is the correct method for this?
-                    list($contentvalue,$contentlabel) = preg_split('/(=|::)/', $content, 2); // supports Red or 1=Red or rouge::Red formats
+                    $extradata = json_decode($questionsbyposition[$position]->extradata, true);
+                    $content = $extradata[$responserow->rankvalue] ?? '';
+                    $contentvalue = '';
+                    $contentlabel = '';
+                    @list($contentvalue,$contentlabel) = preg_split('/(=|::)/', $content, 2); // supports Red or 1=Red or rouge::Red formats
                     if (is_null($contentlabel)) { // content was only a label
                         $contentlabel = $contentvalue;
                         $contentvalue = $responserow->rankvalue;
@@ -3662,7 +3665,7 @@ class questionnaire {
                     if ($rankaverages) {
                         $averagerow[$position] = $averages[$qid][$responserow->choice_id];
                     }
-                    if ($choicetxt == '-999') $choicetxt = '';
+                    if (strpos($choicetxt,'-999') === 0) $choicetxt = '';
                 } else {
                     $content = $choicesbyqid[$qid][$responserow->choice_id]->content;
                     if (\mod_questionnaire\question\choice::content_is_other_choice($content)) {
@@ -3693,7 +3696,9 @@ class questionnaire {
                         }
                     }
                     $content = $choicesbyqid[$qid][$responserow->choice_id]->content;
-                    list($contentvalue,$contentlabel) = preg_split('/(=|::)/', $content, 2); // supports Red or 1=Red or rouge::Red formats
+                    $contentvalue = '';
+                    $contentlabel = '';
+                    @list($contentvalue,$contentlabel) = preg_split('/(=|::)/', $content, 2); // supports Red or 1=Red or rouge::Red formats
                     if (is_null($contentlabel)) { // content was only a label
                         $contentlabel = $contentvalue;
                         $contentvalue = $c;
