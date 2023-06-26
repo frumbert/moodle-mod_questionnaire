@@ -122,6 +122,20 @@ class mod_questionnaire_external extends \external_api {
         return $result;
     }
 
+    /**
+     * Describes the submit_questionnaire_response return value.
+     *
+     * @return external_single_structure
+     * @since Moodle 3.0
+     */
+    public static function submit_questionnaire_response_returns() {
+        return new \external_single_structure(
+            [
+                'submitted' => new \external_value(PARAM_BOOL, 'submitted', true, false, false),
+                'warnings' => new \external_warnings()
+            ]
+        );
+    }
 
 
     /* --------- STORE FEEDBACK TEXT VALUE ----------- */
