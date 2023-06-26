@@ -3138,6 +3138,9 @@ class questionnaire {
         if ($showincompletes == 1) {
             $options[] = 'complete';
         }
+        if (strpos($this->course->idnumber, '_anon')!==false) {
+            $options[] = 'portallink';
+        }
 
         $positioned = [];
         $user = new stdClass();
@@ -3241,11 +3244,14 @@ class questionnaire {
         if (in_array('username', $options)) {
             array_push($positioned, $username);
         }
-        if (in_array('idnumber', $options)) {
+        if (in_array('idnumber', $options) && !in_array('portallink', $options)) { // no id-number for anon courses; portallink only applied to anon courses.
             array_push($positioned, $user->idnumber);
         }
         if (in_array('complete', $options)) {
             array_push($positioned, $resprow->complete);
+        }
+        if (in_array('portallink', $options)) {
+            array_push($positioned, self::WasPortalLink($user->id, $this->course->idnumber));
         }
 
         for ($c = $nbinfocols; $c < $numrespcols; $c++) {
@@ -3315,6 +3321,9 @@ class questionnaire {
         if ($showincompletes == 1) {
             $options[] = 'complete';
         }
+        if (strpos($COURSE->idnumber,'_anon')!==false) {
+            $options[] = 'portallink';
+        }
 
         $columns = array();
         $types = array();
@@ -3322,12 +3331,17 @@ class questionnaire {
             if (in_array($option, array('response', 'submitted', 'id'))) {
                 $columns[] = get_string($option, 'questionnaire');
                 $types[] = 0;
-            } else if (in_array($option, array('course', 'category','duration'))) {
+            } else if ($option == 'portallink') {
+                $columns[] = 'Portal link';
+                $types[] = 1;
+            } else if (in_array($option, array('course', 'category', 'duration'))) {
                 $columns[] = get_string($option, 'questionnaire');
                 $types[] = 1;
             } else if ($option == 'idnumber') {
-                $columns[] = get_string('idnumber', 'questionnaire');
-                $types[] = 1;
+                if (!in_array('portallink', $options)) {
+                    $columns[] = get_string('idnumber', 'questionnaire');
+                    $types[] = 1;
+                }
             } else {
                 $columns[] = get_string($option);
                 $types[] = 1;
@@ -3714,6 +3728,8 @@ class questionnaire {
                     } else {
                         $responsetxt = $contentlabel;
                     }
+                    if ($choicecodes == 0 && $choicetext == 1 && $responsetxt === "Yes") $responsetxt = "1";
+                    if ($choicecodes == 0 && $choicetext == 1 && $responsetxt === "No") $responsetxt = "0";
                 } else if (intval($qtype) === QUESYESNO) {
                     // At this point, the boolean responses are returned as characters in the "response"
                     // field instead of "choice_id" for csv exports (CONTRIB-6436).
@@ -4328,6 +4344,21 @@ class questionnaire {
         $result->percent = round($totalscore / $maxtotalscore * 100);
 
         return $result;
+    }
+
+    // so this is a bit of jank / "magic values"
+    // the course idnumber is THIS course which is an _anon or _eval course
+    // the idnumber stored by the log is the one that was being opened by the link that recorded the log
+    // so we have to remove the _anon or _eval from the idnumber then use the courseid of the matching course
+    // this only works because aa_surgeon and aa_surgeon_anon are similar idnumbers - not robust
+    private static function WasPortalLink($user_id, $this_course_idnumber) {
+    global $DB;
+        $course = $DB->get_record('course',['idnumber'=> str_replace(['_anon','_eval'], '', $this_course_idnumber)],'id',MUST_EXIST);
+        if ($DB->record_exists('log',['userid'=>$user_id,'course'=>$course->id,'action'=>'internal'])) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
 
 }
